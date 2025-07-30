@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thrust</title>
+    <link rel="stylesheet" href="assets/css/game.css" />
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+      <div id="ui">
+        FUEL: <span id="fuel">100</span>% | SCORE: <span id="score">0</span>
+      </div>
+      <canvas id="minimap" width="150" height="100"></canvas>
+    </div>
+
+    <script type="module" src="assets/js/Terrain.js"></script>
+    <script type="module" src="assets/js/Turret.js"></script>
+    <script type="module" src="assets/js/Patrol.js"></script>
+    <script type="module" src="assets/js/Pod.js"></script>
+    <script type="module" src="assets/js/Ship.js"></script>
+    <script type="module" src="assets/js/game.js"></script>
+
+    <script type="module">
+      import Game from "./assets/js/Game.js";
+
+      // Global constants
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const minimapCanvas = document.getElementById("minimap");
+      const minimapCtx = minimapCanvas.getContext("2d");
+      const fuelDisplay = document.getElementById("fuel");
+      const scoreDisplay = document.getElementById("score");
+
+      var game = new Game({
+        canvas: canvas,
+        minimapCanvas: minimapCanvas,
+        fuelDisplay: fuelDisplay,
+        scoreDisplay: scoreDisplay
+      });
+
+      // Game loop
+      function gameLoop() {
+        if (!game.gameOver) {
+          game.update();
+        }
+
+        game.draw(ctx, minimapCtx);
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Key handlers
+      window.addEventListener("keydown", (e) => {
+        if (game.gameOver && e.key === " ") {
+          game.reset();
+          return;
+        }
+
+        switch (e.key) {
+          case "ArrowLeft":
+            game.keys.left = true;
+            break;
+          case "ArrowRight":
+            game.keys.right = true;
+            break;
+          case "ArrowUp":
+            game.keys.up = true;
+            break;
+          case "z":
+            game.keys.space = true;
+            break;
+        }
+      });
+
+      window.addEventListener("keyup", (e) => {
+        debugger;
+        switch (e.key) {
+          case "ArrowLeft":
+            game.keys.left = false;
+            break;
+          case "ArrowRight":
+            game.keys.right = false;
+            break;
+          case "ArrowUp":
+            game.keys.up = false;
+            break;
+          case "z":
+            game.keys.space = false;
+            break;
+        }
+      });
+
+      // Start the game
+      gameLoop();
+    </script>
+  </body>
+</html>

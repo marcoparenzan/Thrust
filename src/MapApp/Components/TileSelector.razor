@@ -1,0 +1,21 @@
+﻿@using System.Reflection
+<InputSelect @bind-Value="@BoundType" class="form-select">
+    @for (byte type = 0; type < 16; type++)
+    {
+        <option value="@type">@type</option>
+    }
+</InputSelect>
+
+@code {
+    [Parameter]
+    public byte Type { get; set; }
+
+    [Parameter]
+    public EventCallback<byte> TypeChanged { get; set; }
+
+    private byte BoundType
+    {
+        get => Type;
+        set => TypeChanged.InvokeAsync(value);
+    }
+}
