@@ -6,10 +6,6 @@ import Level06Terrain from './Level06Terrain.js';
 
 export default class Level06Scene {
   
-  // World size (much larger than canvas)
-  WORLD_WIDTH = 3000;
-  WORLD_HEIGHT = 2000;
-
   constructor(game) {
     this.game = game;
 
