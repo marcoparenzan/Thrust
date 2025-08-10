@@ -1,67 +1,23 @@
 export default class Terrain {
   constructor(scene)  {
     this.scene = scene;
-    this.generateCaves();
   }
+ 
+  load(data) {
 
-  generateCaves() {
     this.grid = [];
-    const cellSize = 40; // Size of each grid cell
-    const gridWidth = Math.ceil(this.scene.WORLD_WIDTH / cellSize);
-    const gridHeight = Math.ceil(this.scene.WORLD_HEIGHT / cellSize);
+    this.cellSize = data.cellSize || 40; // Size of each grid cell
+    this.gridWidth = data.gridWidth || 72; // Width of the grid in cells
+    this.gridHeight = data.gridHeight || 167; // Height of the grid in cells
+    this.WORLD_WIDTH = this.gridWidth * this.cellSize;
+    this.WORLD_HEIGHT = this.gridHeight * this.cellSize;
 
+    let i = 0;
     // Initialize grid with more open space
-    for (let y = 0; y < gridHeight; y++) {
+    for (let y = 0; y < this.gridHeight; y++) {
       this.grid[y] = [];
-      for (let x = 0; x < gridWidth; x++) {
-        // Make edges always walls
-        if (x === 0 || x === gridWidth - 1 || y === 0 || y === gridHeight - 1) {
-          this.grid[y][x] = 1; // Wall
-        } else {
-          // Reduce wall probability from 0.45 to 0.30
-          this.grid[y][x] = Math.random() < 0.3 ? 1 : 0;
-        }
-      }
-    }
-
-    // Cellular automata to create caves
-    for (let iteration = 0; iteration < 5; iteration++) {
-      const newGrid = JSON.parse(JSON.stringify(this.grid));
-
-      for (let y = 1; y < gridHeight - 1; y++) {
-        for (let x = 1; x < gridWidth - 1; x++) {
-          let walls = 0;
-
-          // Count walls in 3x3 neighborhood
-          for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              if (this.grid[y + dy][x + dx] === 1) {
-                walls++;
-              }
-            }
-          }
-
-          // Modified rule for more open space
-          if (walls > 5) {
-            // Increased from 4 to 5
-            newGrid[y][x] = 1; // Create wall
-          } else if (walls < 4) {
-            // Increased from 3 to 4
-            newGrid[y][x] = 0; // Create open space
-          }
-        }
-      }
-
-      this.grid = newGrid;
-    }
-
-    // Create larger passages by removing some walls
-    for (let y = 1; y < gridHeight - 1; y++) {
-      for (let x = 1; x < gridWidth - 1; x++) {
-        // Randomly remove some walls to create more open space
-        if (this.grid[y][x] === 1 && Math.random() < 0.2) {
-          this.grid[y][x] = 0;
-        }
+      for (let x = 0; x < this.gridWidth; x++) {
+        this.grid[y][x] = data.grid[i++]; 
       }
     }
 
@@ -73,8 +29,8 @@ export default class Terrain {
 
       // Find valid landing pad locations
       while (!found) {
-        padX = Math.floor(Math.random() * (gridWidth - 10)) + 5;
-        padY = Math.floor(Math.random() * (gridHeight - 10)) + 5;
+        padX = Math.floor(Math.random() * (this.gridWidth - 10)) + 5;
+        padY = Math.floor(Math.random() * (this.gridHeight - 10)) + 5;
 
         // Check if area is clear for landing pad
         let clear = true;
@@ -96,9 +52,9 @@ export default class Terrain {
           }
 
           this.landingPads.push({
-            x: (padX + 1) * cellSize,
-            y: padY * cellSize,
-            width: 3 * cellSize,
+            x: (padX + 1) * this.cellSize,
+            y: padY * this.cellSize,
+            width: 3 * this.cellSize,
           });
         }
       }
@@ -106,24 +62,38 @@ export default class Terrain {
 
     // Convert grid to polygons for efficient drawing and collision
     this.walls = [];
-    this.cellSize = cellSize;
-
-    for (let y = 0; y < gridHeight; y++) {
-      for (let x = 0; x < gridWidth; x++) {
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
         if (this.grid[y][x] === 1) {
           this.walls.push({
-            x: x * cellSize,
-            y: y * cellSize,
-            width: cellSize,
-            height: cellSize,
+            x: x * this.cellSize,
+            y: y * this.cellSize,
+            width: this.cellSize,
+            height: this.cellSize,
           });
         }
       }
     }
+      
+    this.enemies = [];
+    this.pod = null;
+  }
+
+  color(value) {
+    switch (value) {
+      case 0:
+        return "#000000"; // Empty space
+      case 1:
+        return "#FFFFFF"; // Wall
+      case 2:
+        return "#FF0000"; // Landing pad
+      default:
+        return "#AAAAAA"; // Default color
+    }
   }
 
   draw(ctx, offsetX, offsetY) {
-    // Draw walls
+    
     ctx.fillStyle = "#4CFF4C";
     for (const wall of this.walls) {
       const screenX = wall.x - offsetX;
@@ -142,6 +112,7 @@ export default class Terrain {
       ctx.fillRect(screenX, screenY, wall.width, wall.height);
     }
 
+    
     // Draw landing pads
     ctx.fillStyle = "#FF4C4C";
     for (const pad of this.landingPads) {
@@ -163,8 +134,8 @@ export default class Terrain {
 
   // Draw minimap
   drawMinimap(ctx) {
-    const scaleX = this.scene.game.minimapCanvas.width / this.scene.WORLD_WIDTH;
-    const scaleY = this.scene.game.minimapCanvas.height / this.scene.WORLD_HEIGHT;
+    const scaleX = this.scene.game.minimapCanvas.width / this.WORLD_WIDTH;
+    const scaleY = this.scene.game.minimapCanvas.height / this.WORLD_HEIGHT;
 
     // Clear minimap
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";

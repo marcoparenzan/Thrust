@@ -4,29 +4,24 @@ import Turret from './Turret.js';
 import Patrol from './Patrol.js';
 import Terrain from './Terrain.js';
 
-export default class LevelScene {
+export default class Scene {
   
-  // World size (much larger than canvas)
-  WORLD_WIDTH = 3000;
-  WORLD_HEIGHT = 2000;
-
   constructor(game) {
     this.game = game;
-
-    this.initializeWorld();
-    this.gravity = 0.05;
   }
 
-  initializeWorld() {
+  load(data) {
+
     // Create terrain first
     this.terrain = new Terrain(this);
+    this.terrain.load(data);
+
+    this.gravity = data.gravity || 0.05;
 
     // Find a good starting position for the ship (open space)
     let shipX, shipY;
-    do {
-      shipX = Math.random() * (this.WORLD_WIDTH - 400) + 200;
-      shipY = Math.random() * 400 + 100; // Start from top portion
-    } while (this.isPositionSolid(shipX, shipY));
+    shipX = data.shipX || 300;
+    shipY = data.shipY || 100;
 
     this.ship = new Ship(this, shipX, shipY);
 
@@ -40,71 +35,53 @@ export default class LevelScene {
     // Create enemies
     this.enemies = [];
 
-    // Add turrets near landing pads
-    for (let i = 0; i < this.terrain.landingPads.length; i++) {
-      const pad = this.terrain.landingPads[i];
+    // // Add turrets near landing pads
+    // for (let i = 0; i < this.terrain.landingPads.length; i++) {
+    //   const pad = this.terrain.landingPads[i];
 
-      // Add 2 turrets per landing pad
-      for (let j = 0; j < 2; j++) {
-        let enemyX, enemyY;
-        let validPosition = false;
+    //   // Add 2 turrets per landing pad
+    //   for (let j = 0; j < 2; j++) {
+    //     let enemyX, enemyY;
+    //     let validPosition = false;
 
-        // Try to find valid positions
-        for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
-          // Place turrets near landing pads
-          enemyX = pad.x + pad.width / 2 + (Math.random() - 0.5) * 300;
-          enemyY = pad.y + (Math.random() - 0.5) * 300;
+    //     // Try to find valid positions
+    //     for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
+    //       // Place turrets near landing pads
+    //       enemyX = pad.x + pad.width / 2 + (Math.random() - 0.5) * 300;
+    //       enemyY = pad.y + (Math.random() - 0.5) * 300;
 
-          // Validate position is not inside a wall
-          validPosition = !this.isPositionSolid(enemyX, enemyY);
-        }
+    //       // Validate position is not inside a wall
+    //       validPosition = !this.isPositionSolid(enemyX, enemyY);
+    //     }
 
-        if (validPosition) {
-          this.enemies.push(new Turret(this, enemyX, enemyY));
-        }
-      }
-    }
+    //     if (validPosition) {
+    //       this.enemies.push(new Turret(this, enemyX, enemyY));
+    //     }
+    //   }
+    // }
 
-    // Add patrolling enemies
-    for (let i = 0; i < 10; i++) {
-      let enemyX, enemyY;
-      let validPosition = false;
+    // // Add patrolling enemies
+    // for (let i = 0; i < 10; i++) {
+    //   let enemyX, enemyY;
+    //   let validPosition = false;
 
-      // Try to find valid positions
-      for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
-        enemyX = Math.random() * (this.WORLD_WIDTH - 400) + 200;
-        enemyY = Math.random() * (this.WORLD_HEIGHT - 400) + 200;
+    //   // Try to find valid positions
+    //   for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
+    //     enemyX = Math.random() * (this.terrain.WORLD_WIDTH - 400) + 200;
+    //     enemyY = Math.random() * (this.terrain.WORLD_HEIGHT - 400) + 200;
 
-        // Validate position is not inside a wall
-        validPosition = !this.isPositionSolid(enemyX, enemyY);
-      }
+    //     // Validate position is not inside a wall
+    //     validPosition = !this.isPositionSolid(enemyX, enemyY);
+    //   }
 
-      if (validPosition) {
-        this.enemies.push(new Patrol(this, enemyX, enemyY));
-      }
-    }
+    //   if (validPosition) {
+    //     this.enemies.push(new Patrol(this, enemyX, enemyY));
+    //   }
+    // }
 
     // Init viewport offset
     this.offsetX = Math.max(0, this.ship.x - this.game.canvas.width / 2);
     this.offsetY = Math.max(0, this.ship.y - this.game.canvas.height / 2);
-  }
-
-  isPositionSolid(x, y) {
-    const cellSize = this.terrain.cellSize;
-    const gridX = Math.floor(x / cellSize);
-    const gridY = Math.floor(y / cellSize);
-
-    // Check grid boundaries
-    if (
-      gridX < 0 ||
-      gridY < 0 ||
-      gridY >= this.terrain.grid.length ||
-      gridX >= this.terrain.grid[0].length
-    ) {
-      return true; // Outside grid is solid
-    }
-
-    return this.terrain.grid[gridY][gridX] === 1; // 1 = wall
   }
 
   update() {
@@ -139,11 +116,11 @@ export default class LevelScene {
     // Update viewport offset (camera follows ship)
     this.offsetX = Math.max(
       0,
-      Math.min(this.WORLD_WIDTH - this.game.canvas.width, this.ship.x - this.game.canvas.width / 2)
+      Math.min(this.terrain.WORLD_WIDTH - this.game.canvas.width, this.ship.x - this.game.canvas.width / 2)
     );
     this.offsetY = Math.max(
       0,
-      Math.min(this.WORLD_HEIGHT - this.game.canvas.height, this.ship.y - this.game.canvas.height / 2)
+      Math.min(this.terrain.WORLD_HEIGHT - this.game.canvas.height, this.ship.y - this.game.canvas.height / 2)
     );
   }
 
@@ -181,7 +158,7 @@ export default class LevelScene {
         if (this.terrain.grid[y][x] === 1) {
           // Wall collision
           collidingWithWall = true;
-        } else if (this.terrain.grid[y][x] === 2) {
+        } else if (this.terrain.grid[y][x] === 3) {
           // Landing pad
           onLandingPad = true;
           landingPadY = y * cellSize;
@@ -191,7 +168,7 @@ export default class LevelScene {
 
     if (collidingWithWall) {
       // Handle wall collision
-      this.game.end("CRASHED INTO WALL!");
+      this.game.gotoEnd("CRASHED INTO WALL!");
     } else if (onLandingPad) {
       // Check for proper landing
       const shipBottomY = this.ship.y + this.ship.height / 2;
@@ -224,7 +201,7 @@ export default class LevelScene {
         Math.abs(Math.sin(this.ship.rotation)) >= 0.1
       ) {
         // Bad landing
-        this.game.end("CRASH LANDING!");
+        this.game.gotoEnd("CRASH LANDING!");
       }
     }
 
@@ -235,15 +212,11 @@ export default class LevelScene {
       this.ship.y < 0 ||
       this.ship.y > this.WORLD_HEIGHT
     ) {
-      this.game.end("OUT OF BOUNDS!");
+      this.game.gotoEnd("OUT OF BOUNDS!");
     }
   }
 
-  reset() {
-    this.initializeWorld();
-  }
-
-  draw(ctx, minimapCtx) {
+  draw(ctx) {
 
     // Draw stars (background)
     ctx.fillStyle = "#FFFFFF";
@@ -267,8 +240,5 @@ export default class LevelScene {
 
     // Draw ship (always centered)
     this.ship.draw(ctx);
-
-    // Draw minimap
-    this.terrain.drawMinimap(minimapCtx);
   }
 }

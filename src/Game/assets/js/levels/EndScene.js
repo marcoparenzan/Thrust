@@ -1,0 +1,41 @@
+export default class EndScene {
+
+  constructor(game) {
+    this.game = game;
+
+    this.initializeWorld();
+  }
+
+  initializeWorld() {
+  }
+
+  update() {
+    if (this.game.keys.space) {
+      this.game.reset();
+    }
+  }
+
+  draw(ctx, minimapCtx) {
+
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+
+    ctx.fillStyle = "#FF0000";
+    ctx.font = "40px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", this.game.canvas.width / 2, this.game.canvas.height / 2 - 40);
+    ctx.fillText(this.message, this.game.canvas.width / 2, this.game.canvas.height / 2);
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "20px monospace";
+    ctx.fillText(
+      "Press SPACE to restart",
+      this.game.canvas.width / 2,
+      this.game.canvas.height / 2 + 60
+    );
+  }
+
+  reset() {
+    this.initializeWorld();
+  }
+}

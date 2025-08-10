@@ -1,10 +1,10 @@
-export default class Level06Terrain {
-  constructor(scene)  {
-    this.scene = scene;
-    this.generateCaves();
-  }
-  
-  data = [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+{   
+    "gravity": 0.05,
+    "shipX": 300,
+    "shipY": 100,
+    "gridWidth": 72,
+    "gridHeight": 167,
+    "grid": [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -170,125 +170,5 @@ export default class Level06Terrain {
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-
-              
-  // World size (much larger than canvas)
-  WORLD_WIDTH = 3000;
-  WORLD_HEIGHT = 2000;
-
-  generateCaves() {
-
-    this.grid = [];
-    const cellSize = 40; // Size of each grid cell
-    this.gridWidth = 72
-    this.gridHeight = 167;
-    this.WORLD_WIDTH = this.gridWidth * cellSize;
-    this.WORLD_HEIGHT = this.gridHeight * cellSize;
-
-
-    let i = 0;
-    // Initialize grid with more open space
-    for (let y = 0; y < this.gridHeight; y++) {
-      this.grid[y] = [];
-      for (let x = 0; x < this.gridWidth; x++) {
-        
-        this.grid[y][x] = this.data[i++]; 
-      }
-    }
-
-  }
-
-  draw(ctx, offsetX, offsetY) {
-    
-    // Initialize grid with more open space
-    for (let y = 0; y < this.gridHeight; y++) {
-      this.grid[y] = [];
-      for (let x = 0; x < this.gridWidth; x++) {
-        
-          if (
-            screenX < -this.cellSize ||
-            screenX > this.scene.game.canvas.width ||
-            screenY < -this.cellSize ||
-            screenY > this.scene.game.canvas.height
-          ) {
-            continue;
-          }
-
-          ctx.fillStyle = FROM(this.grid[y][x]);
-
-          ctx.fillRect(screenX, screenY, wall.width, wall.height);
-
-        
-      }
-    }
-  }
-
-  // Draw minimap
-  drawMinimap(ctx) {
-    // const scaleX = this.scene.game.minimapCanvas.width / this.scene.WORLD_WIDTH;
-    // const scaleY = this.scene.game.minimapCanvas.height / this.scene.WORLD_HEIGHT;
-
-    // // Clear minimap
-    // ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    // ctx.fillRect(0, 0, this.scene.game.minimapCanvas.width, this.scene.game.minimapCanvas.height);
-
-    // // Draw walls
-    // ctx.fillStyle = "#4CFF4C";
-    // for (const wall of this.walls) {
-    //   ctx.fillRect(
-    //     wall.x * scaleX,
-    //     wall.y * scaleY,
-    //     this.cellSize * scaleX,
-    //     this.cellSize * scaleY
-    //   );
-    // }
-
-    // // Draw landing pads
-    // ctx.fillStyle = "#FF4C4C";
-    // for (const pad of this.landingPads) {
-    //   ctx.fillRect(
-    //     pad.x * scaleX,
-    //     pad.y * scaleY,
-    //     pad.width * scaleX,
-    //     this.cellSize * scaleY
-    //   );
-    // }
-
-    // // Draw pod
-    // if (!this.scene.ship.hasPod) {
-    //   ctx.fillStyle = "#A0A0FF";
-    //   ctx.fillRect(
-    //     this.scene.pod.x * scaleX - 1,
-    //     this.scene.pod.y * scaleY - 1,
-    //     3,
-    //     3
-    //   );
-    // }
-
-    // // Draw enemies
-    // ctx.fillStyle = "#FF0000";
-    // for (const enemy of this.scene.enemies) {
-    //   ctx.fillRect(enemy.x * scaleX - 1, enemy.y * scaleY - 1, 3, 3);
-    // }
-
-    // // Draw ship
-    // ctx.fillStyle = "#FFFFFF";
-    // ctx.fillRect(
-    //   this.scene.ship.x * scaleX - 2,
-    //   this.scene.ship.y * scaleY - 2,
-    //   4,
-    //   4
-    // );
-
-    // // Draw viewport rectangle
-    // ctx.strokeStyle = "#FFFFFF";
-    // ctx.lineWidth = 1;
-    // ctx.strokeRect(
-    //   this.scene.offsetX * scaleX,
-    //   this.scene.offsetY * scaleY,
-    //   this.scene.game.canvas.width * scaleX,
-    //   this.scene.game.canvas.height * scaleY
-    // );
-  }
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 }

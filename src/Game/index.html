@@ -12,14 +12,9 @@
       <div id="ui">
         FUEL: <span id="fuel">100</span>% | SCORE: <span id="score">0</span>
       </div>
-      <canvas id="minimap" width="150" height="100"></canvas>
+      <canvas id="minimap" width="100" height="230"></canvas>
     </div>
 
-    <script type="module" src="assets/js/Terrain.js"></script>
-    <script type="module" src="assets/js/Turret.js"></script>
-    <script type="module" src="assets/js/Patrol.js"></script>
-    <script type="module" src="assets/js/Pod.js"></script>
-    <script type="module" src="assets/js/Ship.js"></script>
     <script type="module" src="assets/js/game.js"></script>
 
     <script type="module">
@@ -39,12 +34,11 @@
         fuelDisplay: fuelDisplay,
         scoreDisplay: scoreDisplay
       });
+      game.reset();
 
       // Game loop
       function gameLoop() {
-        if (!game.gameOver) {
-          game.update();
-        }
+        game.update();
 
         game.draw(ctx, minimapCtx);
         requestAnimationFrame(gameLoop);
@@ -74,7 +68,6 @@
       });
 
       window.addEventListener("keyup", (e) => {
-        debugger;
         switch (e.key) {
           case "ArrowLeft":
             game.keys.left = false;

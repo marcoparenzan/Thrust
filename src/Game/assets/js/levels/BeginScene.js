@@ -1,4 +1,4 @@
-export default class EndScene {
+export default class BeginScene {
 
   constructor(game) {
     this.game = game;
@@ -10,6 +10,9 @@ export default class EndScene {
   }
 
   update() {
+    if (this.game.keys.space) {
+      this.game.gotoLevel('assets/js/levels/06/Data.json');
+    }
   }
 
   draw(ctx, minimapCtx) {
@@ -20,17 +23,17 @@ export default class EndScene {
     ctx.fillStyle = "#FF0000";
     ctx.font = "40px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("GAME OVER", this.game.canvas.width / 2, this.game.canvas.height / 2 - 40);
-    debugger;
-    ctx.fillText(this.message, this.game.canvas.width / 2, this.game.canvas.height / 2);
+    ctx.fillText("THRUST", this.game.canvas.width / 2, this.game.canvas.height / 2 - 40);
+    // ctx.fillText(this.message, this.game.canvas.width / 2, this.game.canvas.height / 2);
 
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px monospace";
     ctx.fillText(
-      "Press SPACE to restart",
+      "Press SPACE to start",
       this.game.canvas.width / 2,
       this.game.canvas.height / 2 + 60
     );
+    
   }
 
   reset() {
