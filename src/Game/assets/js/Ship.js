@@ -9,7 +9,7 @@ export default class Ship {
     this.thrust = 0.1;
     this.width = 20;
     this.height = 30;
-      this.fuel = 100;
+    this.fuel = 100;
     this.hasPod = false;
     this.screenX = this.scene.game.canvas.width / 2;
     this.screenY = this.scene.game.canvas.height / 2;
@@ -21,13 +21,19 @@ export default class Ship {
     ctx.rotate(this.rotation);
 
     // Ship body
+    ctx.strokeStyle = "#4CFF4C";
+    ctx.lineWidth = 1;
+    ctx.font = "12px monospace";
     ctx.fillStyle = "#85C2FF";
-    ctx.beginPath();
-    ctx.moveTo(0, -this.height / 2);
-    ctx.lineTo(this.width / 2, this.height / 2);
-    ctx.lineTo(-this.width / 2, this.height / 2);
-    ctx.closePath();
-    ctx.fill();
+    // ctx.beginPath();
+    // ctx.moveTo(0, -this.height / 2);
+    // ctx.lineTo(this.width / 2, this.height / 2);
+    // ctx.lineTo(-this.width / 2, this.height / 2);
+    // ctx.closePath();
+    // ctx.fill();
+    ctx.fillText(`${this.x}`, 0, 0);
+    ctx.fillText(`${this.y}`, 0, 0 + 10);
+    ctx.strokeRect(0, 0, this.width, this.height);
 
     // Thrust flame
     if (this.scene.game.keys.up && this.fuel > 0) {
@@ -60,7 +66,6 @@ export default class Ship {
 
       // Decrease fuel
       this.fuel = Math.max(0, this.fuel - 0.1);
-      this.scene.game.fuelDisplay.textContent = Math.floor(this.fuel);
     }
 
     // Apply rotation

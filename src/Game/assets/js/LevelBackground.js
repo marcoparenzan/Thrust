@@ -1,4 +1,4 @@
-export default class Terrain {
+export default class LeverlBackground {
   constructor(scene)  {
     this.scene = scene;
   }
@@ -94,6 +94,9 @@ export default class Terrain {
 
   draw(ctx, offsetX, offsetY) {
     
+    ctx.strokeStyle = "#4CFF4C";
+    ctx.lineWidth = 1;
+    ctx.font = "12px monospace";
     ctx.fillStyle = "#4CFF4C";
     for (const wall of this.walls) {
       const screenX = wall.x - offsetX;
@@ -109,8 +112,11 @@ export default class Terrain {
         continue;
       }
 
-      ctx.fillRect(screenX, screenY, wall.width, wall.height);
-    }
+      ctx.fillText(`${wall.x}`, screenX, screenY);
+      ctx.fillText(`${wall.y}`, screenX, screenY+10);
+      ctx.strokeRect(screenX, screenY, wall.width, wall.height);
+      // ctx.fillRect(screenX, screenY, wall.width, wall.height);
+ }
 
     
     // Draw landing pads
@@ -132,14 +138,14 @@ export default class Terrain {
     }
   }
 
-  // Draw minimap
-  drawMinimap(ctx) {
-    const scaleX = this.scene.game.minimapCanvas.width / this.WORLD_WIDTH;
-    const scaleY = this.scene.game.minimapCanvas.height / this.WORLD_HEIGHT;
+  // Draw map
+  drawMap(ctx) {
+    const scaleX = this.scene.game.mapCanvas.width / this.WORLD_WIDTH;
+    const scaleY = this.scene.game.mapCanvas.height / this.WORLD_HEIGHT;
 
-    // Clear minimap
+    // Clear map
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(0, 0, this.scene.game.minimapCanvas.width, this.scene.game.minimapCanvas.height);
+    ctx.fillRect(0, 0, this.scene.game.mapCanvas.width, this.scene.game.mapCanvas.height);
 
     // Draw walls
     ctx.fillStyle = "#4CFF4C";

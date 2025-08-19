@@ -1,6 +1,6 @@
 {   
     "gravity": 0.05,
-    "shipX": 300,
+    "shipX": 900,
     "shipY": 100,
     "gridWidth": 72,
     "gridHeight": 167,

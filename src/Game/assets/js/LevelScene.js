@@ -2,9 +2,9 @@ import Ship from './Ship.js';
 import Pod from './Pod.js';
 import Turret from './Turret.js';
 import Patrol from './Patrol.js';
-import Terrain from './Terrain.js';
+import LevelBackground from './LevelBackground.js';
 
-export default class Scene {
+export default class LevelScene {
   
   constructor(game) {
     this.game = game;
@@ -12,32 +12,32 @@ export default class Scene {
 
   load(data) {
 
-    // Create terrain first
-    this.terrain = new Terrain(this);
-    this.terrain.load(data);
+    // Create background first
+    this.background = new LevelBackground(this);
+    this.background.load(data);
 
     this.gravity = data.gravity || 0.05;
 
     // Find a good starting position for the ship (open space)
     let shipX, shipY;
-    shipX = data.shipX || 300;
+    shipX = data.shipX || 100;
     shipY = data.shipY || 100;
 
     this.ship = new Ship(this, shipX, shipY);
 
     // Place pod near a landing pad
     const padIndex = Math.floor(
-      Math.random() * this.terrain.landingPads.length
+      Math.random() * this.background.landingPads.length
     );
-    const pad = this.terrain.landingPads[padIndex];
+    const pad = this.background.landingPads[padIndex];
     this.pod = new Pod(this, pad.x + pad.width / 2, pad.y - 20);
 
     // Create enemies
     this.enemies = [];
 
     // // Add turrets near landing pads
-    // for (let i = 0; i < this.terrain.landingPads.length; i++) {
-    //   const pad = this.terrain.landingPads[i];
+    // for (let i = 0; i < this.background.landingPads.length; i++) {
+    //   const pad = this.background.landingPads[i];
 
     //   // Add 2 turrets per landing pad
     //   for (let j = 0; j < 2; j++) {
@@ -67,8 +67,8 @@ export default class Scene {
 
     //   // Try to find valid positions
     //   for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
-    //     enemyX = Math.random() * (this.terrain.WORLD_WIDTH - 400) + 200;
-    //     enemyY = Math.random() * (this.terrain.WORLD_HEIGHT - 400) + 200;
+    //     enemyX = Math.random() * (this.background.WORLD_WIDTH - 400) + 200;
+    //     enemyY = Math.random() * (this.background.WORLD_HEIGHT - 400) + 200;
 
     //     // Validate position is not inside a wall
     //     validPosition = !this.isPositionSolid(enemyX, enemyY);
@@ -94,7 +94,7 @@ export default class Scene {
       enemy.update();
     }
 
-    // Check collision with terrain
+    // Check collision with background
     this.checkCollision();
 
     // Check for pod pickup
@@ -109,24 +109,23 @@ export default class Scene {
     // Check for mission complete (exit at top with pod)
     if (this.ship.hasPod && this.ship.y < 50) {
       this.game.score += 1000;
-      this.game.scoreDisplay.textContent = this.score;
       this.game.reset();
     }
 
     // Update viewport offset (camera follows ship)
     this.offsetX = Math.max(
       0,
-      Math.min(this.terrain.WORLD_WIDTH - this.game.canvas.width, this.ship.x - this.game.canvas.width / 2)
+      Math.min(this.background.WORLD_WIDTH - this.game.canvas.width, this.ship.x - this.game.canvas.width / 2)
     );
     this.offsetY = Math.max(
       0,
-      Math.min(this.terrain.WORLD_HEIGHT - this.game.canvas.height, this.ship.y - this.game.canvas.height / 2)
+      Math.min(this.background.WORLD_HEIGHT - this.game.canvas.height, this.ship.y - this.game.canvas.height / 2)
     );
   }
 
   checkCollision() {
     // Check collision with cave walls
-    const cellSize = this.terrain.cellSize;
+    const cellSize = this.background.cellSize;
     const shipLeft = this.ship.x - this.ship.width / 2;
     const shipRight = this.ship.x + this.ship.width / 2;
     const shipTop = this.ship.y - this.ship.height / 2;
@@ -149,16 +148,16 @@ export default class Scene {
         if (
           y < 0 ||
           x < 0 ||
-          y >= this.terrain.grid.length ||
-          x >= this.terrain.grid[0].length
+          y >= this.background.grid.length ||
+          x >= this.background.grid[0].length
         ) {
           continue;
         }
 
-        if (this.terrain.grid[y][x] === 1) {
+        if (this.background.grid[y][x] === 1) {
           // Wall collision
           collidingWithWall = true;
-        } else if (this.terrain.grid[y][x] === 3) {
+        } else if (this.background.grid[y][x] === 3) {
           // Landing pad
           onLandingPad = true;
           landingPadY = y * cellSize;
@@ -186,7 +185,6 @@ export default class Scene {
 
         // Award points
         this.score += this.ship.hasPod ? 500 : 100;
-        this.game.scoreDisplay.textContent = this.score;
 
         // Refuel
         this.ship.fuel = 100;
@@ -230,15 +228,20 @@ export default class Scene {
     }
 
     // Draw game world
-    this.terrain.draw(ctx,this.offsetX, this.offsetY);
-    this.pod.draw(ctx,this.offsetX, this.offsetY);
+    this.background.draw(ctx, this.offsetX, this.offsetY);
+    this.pod.draw(ctx, this.offsetX, this.offsetY);
 
     // Draw enemies
     for (const enemy of this.enemies) {
-      enemy.draw(ctx,this.offsetX, this.offsetY);
+      enemy.draw(ctx, this.offsetX, this.offsetY);
     }
 
     // Draw ship (always centered)
     this.ship.draw(ctx);
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "20px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(`SCORE: ${this.game.score} | FUEL: ${Math.floor(this.ship.fuel)}%`, 20, 20);
   }
 }

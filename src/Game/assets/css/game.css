@@ -24,10 +24,44 @@ canvas {
   color: #fff;
   font-size: 16px;
 }
-#minimap {
+#map {
   position: absolute;
   bottom: 10px;
   right: 10px;
   border: 1px solid #fff;
   background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Touch controls for mobile */
+#touch-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 2vw;
+  z-index: 10;
+  pointer-events: none;
+}
+.touch-btn {
+  pointer-events: auto;
+  width: 60px;
+  height: 60px;
+  margin: 10px 5px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(64,64,255,0.7);
+  color: #fff;
+  font-size: 2em;
+  box-shadow: 0 2px 8px #000a;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+  transition: background 0.2s;
+}
+.touch-btn:active {
+  background: #fff;
+  color: #4040ff;
 }
