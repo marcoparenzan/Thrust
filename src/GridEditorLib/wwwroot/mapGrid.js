@@ -30,7 +30,7 @@ export function init(width, height, zoom, ts) {
 
     that.width = width;
     that.height = height;
-    that.zoom = zoom || 32;
+    that.zoom = zoom || 16;
     that.zoomWidth = that.width * that.zoom;
     that.zoomHeight = that.height * that.zoom;
 
@@ -48,9 +48,25 @@ export function drawTile(xx, yy, tile) {
     let x = xx * that.zoom;
     let y = yy * that.zoom;
 
-    var id = tile.type - 1;
-    that.context.drawImage(that.tileset, id * 8, 0, 8, 8, x, y, that.zoom, that.zoom);
+    //var id = tile.type - 1;
+    //that.context.drawImage(that.tileset, id * 8, 0, 8, 8, x, y, that.zoom, that.zoom);
+
+    that.context.fillStyle = color(tile.type);
+    that.context.fillRect(x, y, that.zoom, that.zoom);
 };
+
+function color(value) {
+    switch (value) {
+        case 0:
+            return "#000000"; // Empty space
+        case 1:
+            return "#BBBBBB"; // Wall
+        case 2:
+            return "#FF0000"; // Landing pad
+        default:
+            return "#AAAAAA"; // Default color
+    }
+}
 
 export function load(width, height, tiles, zoom) {
     window.gridEditorLib = window.gridEditorLib || {};
@@ -64,8 +80,8 @@ export function load(width, height, tiles, zoom) {
         let x = 0;
         for (var xx = 0; xx < that.width; xx++) {
 
-            var id = tiles[i].type - 1;
-            that.context.drawImage(that.tileset, id * 8, 0, 8, 8, x, y, that.zoom, that.zoom);
+            that.context.fillStyle = color(tiles[i].type);
+            that.context.fillRect(x, y, that.zoom, that.zoom);
 
             i++;
             x += that.zoom;

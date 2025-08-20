@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace LevelManipulation;
+namespace MapsLib;
 
-internal class LevelConfig
+public class LevelConfig
 {
 
     [JsonPropertyName("cellSize")]

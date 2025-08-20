@@ -5,23 +5,23 @@ namespace MapsLib.Services;
 
 public class MapService
 {
-    int width;
-    int height;
+    int gridWidth;
+    int gridHeight;
     MapTile[] values;
 
     public MapTile[] Values() => values;
 
-    public void Set(int x, int y, byte type) => values[y * width + x] = type;
+    public void Set(int x, int y, byte type) => values[y * gridWidth + x] = type;
 
-    public MapTile Get(int x, int y) => values[y * width + x];
+    public MapTile Get(int x, int y) => values[y * gridWidth + x];
 
-    public int Width => width;  
-    public int Height => height;
+    public int Width => gridWidth;  
+    public int Height => gridHeight;
 
     public async Task EmptyAsync(int width, int height, Action<Action<int, int, byte>> init = null)
     {
-        this.width = width;
-        this.height = height;
+        this.gridWidth = width;
+        this.gridHeight = height;
         this.values = new MapTile[width*height];
         if (init != null)
         {
@@ -32,21 +32,18 @@ public class MapService
 
     public async Task LoadAsync(Stream stream)
     {
-        var je = JsonSerializer.Deserialize<JsonElement>(stream);
-        width = je.GetProperty("Width").GetInt32();
-        height = je.GetProperty("Height").GetInt32();
-        //var map = JsonSerializer.Deserialize<string[]>(je.GetProperty("Map"));
-        //values = FromStringArray(map);
-        var map = JsonSerializer.Deserialize<int[]>(je.GetProperty("Map"));
-        values = FromByteArray(map.Select(xx => (byte) xx).ToArray());
+        var levelConfig = JsonSerializer.Deserialize<LevelConfig>(stream);
+        gridWidth = levelConfig.GridWidth;
+        gridHeight = levelConfig.GridHeight;
+        values = FromByteArray(levelConfig.Grid.Select(xx => (byte) xx).ToArray());
     }
 
     public async Task SaveAsync(Stream stream)
     {
         var entity = new
         {
-            Width = width,
-            Height = height,
+            Width = gridWidth,
+            Height = gridHeight,
             Map = ToStringArray(values)
         };
         var json = JsonSerializer.Serialize(entity);
@@ -62,8 +59,8 @@ public class MapService
         while (true)
         {
             if (i == values.Length) break;
-            lines.Add(string.Join(string.Empty, new ReadOnlySpan<string>(ff, i, width)));
-            i += width;
+            lines.Add(string.Join(string.Empty, new ReadOnlySpan<string>(ff, i, gridWidth)));
+            i += gridWidth;
         }
 
         return lines.ToArray();

@@ -19,6 +19,8 @@
     </div>
 </div>
 @code {
+    string filename = @"D:\MarcoSoft\Thrust\src\Game\assets\js\levels\07\Data.json";
+
     private DotNetObjectReference<Home>? pageProxy;
 
     private byte tileType;
@@ -49,7 +51,7 @@
     {
         try
         {
-            using var stream = new FileStream(@"Levels\06\map.json", FileMode.Open);
+            using var stream = new FileStream(filename, FileMode.Open);
             await mapService.LoadAsync(stream);
             await mapGrid.LoadAsync(mapService.Width, mapService.Height, mapService.Values());
             stream.Close();
@@ -62,7 +64,7 @@
 
     async Task SaveAsync()
     {
-        using var stream = new FileStream(@"D:\MarcoSoft\MapExperiments\MapApp\Levels\06\map.json", FileMode.Create);
+        using var stream = new FileStream(filename, FileMode.Create);
         await mapService.SaveAsync(stream);
         stream.Close();
     }
@@ -74,7 +76,7 @@
             try
             {
                 pageProxy = DotNetObjectReference.Create(this);
-                var tilesetImage = File.ReadAllBytes(@"Levels\06\tiles.png");
+                var tilesetImage = File.ReadAllBytes(filename);
                 await mapGrid.SetupAsync(pageProxy, "canvas", tilesetImage);
                 await EmptyAsync();
             }

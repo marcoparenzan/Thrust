@@ -7,16 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Levels\06\tiles.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Levels\06\tiles.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\GridEditorLib\GridEditorLib.csproj" />
     <ProjectReference Include="..\MapsLib\MapsLib.csproj" />
   </ItemGroup>
