@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/b48b4643-925e-4beb-a584-9cd52e6e2ff3/resourceGroups/MarcoSoft/providers/Microsoft.Web/sites/thrust-marcosoft",
+    "appService.deploySubpath": "."
+}

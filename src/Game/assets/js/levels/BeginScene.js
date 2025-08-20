@@ -10,8 +10,8 @@ export default class BeginScene {
   }
 
   update() {
-    if (this.game.keys.space) {
-      this.game.gotoLevel('assets/js/levels/06/Data.json');
+    if (this.game.keys.space || this.game.keys.up) {
+      this.game.gotoLevel('assets/js/levels/07/Data.json');
     }
   }
 

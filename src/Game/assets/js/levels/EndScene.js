@@ -10,7 +10,7 @@ export default class EndScene {
   }
 
   update() {
-    if (this.game.keys.space) {
+    if (this.game.keys.space || this.game.keys.up) {
       this.game.reset();
     }
   }

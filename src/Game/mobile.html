@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thrust</title>
+    <link rel="stylesheet" href="assets/css/mobile.css" />
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+      <canvas id="map" width="100" height="230"></canvas>
+      
+      <!-- Touch Controls for Mobile -->
+      <div id="touch-controls">
+        <div id="left-controls">
+          <button id="btn-left" class="touch-btn control-btn">◀</button>
+          <button id="btn-right" class="touch-btn control-btn">▶</button>
+        </div>
+        <div id="right-controls">
+          <button id="btn-thrust" class="touch-btn thrust-btn">🚀</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import Game from "./assets/js/Game.js";
+
+      // Global constants
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const mapCanvas = document.getElementById("map");
+      const mapCtx = mapCanvas.getContext("2d");
+
+      var game = new Game({
+        canvas: canvas,
+        mapCanvas: mapCanvas
+      });
+
+      // Responsive canvas for mobile
+      function resizeCanvas() {
+        const container = document.getElementById('game-container');
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+        
+        // Avoid fullscreen - keep reasonable margins
+        const minMargin = 40; // Minimum margin on all sides
+        const maxWidth = Math.min(w * 0.9, 1200); // Max 90% of viewport or 1200px
+        const maxHeight = Math.min(h * 0.8, 800); // Max 80% of viewport or 800px
+        
+        // Account for touch controls space on mobile
+        let reservedSpace = 0;
+        if (isMobile()) {
+          reservedSpace = 120; // Space for touch controls at bottom
+        }
+        
+        // Calculate available space
+        w = Math.min(w - (minMargin * 2), maxWidth);
+        h = Math.min(h - (minMargin * 2) - reservedSpace, maxHeight);
+        
+        // Maintain aspect ratio (4:3 or 16:10 depending on orientation)
+        const isLandscape = w > h;
+        let aspectRatio = isLandscape ? 16/10 : 3/4;
+        
+        if (w / h > aspectRatio) {
+          w = h * aspectRatio;
+        } else {
+          h = w / aspectRatio;
+        }
+        
+        // Ensure minimum size
+        const minSize = 300;
+        if (w < minSize) {
+          w = minSize;
+          h = w / aspectRatio;
+        }
+        if (h < minSize) {
+          h = minSize;
+          w = h * aspectRatio;
+        }
+        
+        // Set canvas size
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        canvas.width = w;
+        canvas.height = h;
+        
+        // Resize map canvas proportionally
+        const mapScale = 0.15; // Map is 15% of main canvas width
+        mapCanvas.width = Math.max(80, Math.floor(w * mapScale));
+        mapCanvas.height = Math.max(120, Math.floor(h * mapScale));
+        mapCanvas.style.width = mapCanvas.width + 'px';
+        mapCanvas.style.height = mapCanvas.height + 'px';
+        
+        console.log(`Canvas resized to: ${w}x${h}`);
+
+        // Resize touch controls if they exist
+        resizeTouchControls();
+
+        game.reset();
+      }
+
+      // Function to resize touch controls based on canvas size
+      function resizeTouchControls() {
+        const touchControls = document.getElementById('touch-controls');
+        if (!touchControls || !isMobile()) return;
+        
+        const canvasRect = canvas.getBoundingClientRect();
+        const buttonSize = Math.max(60, Math.min(80, canvasRect.width * 0.12));
+        
+        // Update button sizes
+        document.querySelectorAll('.touch-btn').forEach(btn => {
+          btn.style.width = buttonSize + 'px';
+          btn.style.height = buttonSize + 'px';
+          btn.style.fontSize = (buttonSize * 0.4) + 'px';
+        });
+      }
+
+      // Check if device is mobile
+      function isMobile() {
+        return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               (navigator.maxTouchPoints > 0 && window.innerWidth <= 768);
+      }
+
+      // Show/hide touch controls based on device
+      function setupTouchControls() {
+        const touchControls = document.getElementById('touch-controls');
+        if (isMobile()) {
+          touchControls.style.display = 'flex';
+          setupTouchEventListeners();
+          resizeTouchControls();
+        } else {
+          touchControls.style.display = 'none';
+        }
+      }
+
+      // Setup touch event listeners
+      function setupTouchEventListeners() {
+        const buttons = [
+          { id: 'btn-left', key: 'left' },
+          { id: 'btn-right', key: 'right' },
+          { id: 'btn-thrust', key: 'up' }
+        ];
+
+        buttons.forEach(({ id, key }) => {
+          const button = document.getElementById(id);
+          if (!button) return;
+
+          // Touch events
+          button.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            game.keys[key] = true;
+            button.classList.add('active');
+          });
+
+          button.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            game.keys[key] = false;
+            button.classList.remove('active');
+          });
+
+          button.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            game.keys[key] = false;
+            button.classList.remove('active');
+          });
+
+          // Mouse events for testing on desktop
+          button.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            game.keys[key] = true;
+            button.classList.add('active');
+          });
+
+          button.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            game.keys[key] = false;
+            button.classList.remove('active');
+          });
+
+          button.addEventListener('mouseleave', (e) => {
+            game.keys[key] = false;
+            button.classList.remove('active');
+          });
+
+          // Prevent context menu
+          button.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+          });
+        });
+      }
+
+      // Resize on window resize and on load
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('orientationchange', resizeCanvas);
+      resizeCanvas();
+
+      // Setup touch controls for mobile devices
+      setupTouchControls();
+
+      // Game loop
+      function gameLoop() {
+        game.update();
+
+        game.draw(ctx, mapCtx);
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Key handlers
+      window.addEventListener("keydown", (e) => {
+        if (game.gameOver && e.key === " ") {
+          game.reset();
+          return;
+        }
+
+        switch (e.key) {
+          case "ArrowLeft":
+            game.keys.left = true;
+            break;
+          case "ArrowRight":
+            game.keys.right = true;
+            break;
+          case "ArrowUp":
+            game.keys.up = true;
+            break;
+          case " ":
+            game.keys.space = true;
+            break;
+        }
+      });
+
+      window.addEventListener("keyup", (e) => {
+        switch (e.key) {
+          case "ArrowLeft":
+            game.keys.left = false;
+            break;
+          case "ArrowRight":
+            game.keys.right = false;
+            break;
+          case "ArrowUp":
+            game.keys.up = false;
+            break;
+          case " ":
+            game.keys.space = false;
+            break;
+        }
+      });
+
+      // Start the game
+      gameLoop();
+    </script>
+  </body>
+</html>

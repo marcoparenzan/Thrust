@@ -32,8 +32,8 @@ export default class Ship {
     // ctx.lineTo(-this.width / 2, this.height / 2);
     // ctx.closePath();
     // ctx.fill();
-    ctx.fillText(`${this.x}`, 0, 0);
-    ctx.fillText(`${this.y}`, 0, 0 + 10);
+    ctx.fillText(`${Math.round(this.x)}`, 0, 0);
+    ctx.fillText(`${Math.round(this.y)}`, 0, 0 + 10);
     ctx.strokeRect(0, 0, this.width, this.height);
 
     // Thrust flame
