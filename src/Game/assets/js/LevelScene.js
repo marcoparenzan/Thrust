@@ -1,8 +1,5 @@
 import Ship from './Ship.js';
-import Pod from './Pod.js';
-import Turret from './Turret.js';
-import Patrol from './Patrol.js';
-import LevelBackground from './LevelBackground.js';
+import TerrainLayer from './TerrainLayer.js';
 
 export default class LevelScene {
   
@@ -12,72 +9,23 @@ export default class LevelScene {
 
   load(data) {
 
-    // Create background first
-    this.background = new LevelBackground(this);
-    this.background.load(data);
+    this.tileSize = data.tileSize || 40; // Size of each tiles cell
+    this.canvasWidth = data.canvasWidth || 72; // Width of the tiles in cells
+    this.canvasHeight = data.canvasHeight || 167; // Height of the tiles in cells
+    this.WORLD_WIDTH = this.canvasWidth * this.tileSize;
+    this.WORLD_HEIGHT = this.canvasHeight * this.tileSize;
+
+    // Create terrain first
+    this.terrain = new TerrainLayer(this);
+    const terrainLayer = data.layers.find(layer => layer.name === "Terrain");
+    this.terrain.load(terrainLayer);
 
     this.gravity = data.gravity || 0.05;
 
-    // Find a good starting position for the ship (open space)
-    let shipX, shipY;
-    shipX = data.shipX || 100;
-    shipY = data.shipY || 100;
 
-    this.ship = new Ship(this, shipX, shipY);
-
-    // Place pod near a landing pad
-    const padIndex = Math.floor(
-      Math.random() * this.background.landingPads.length
-    );
-    const pad = this.background.landingPads[padIndex];
-    this.pod = new Pod(this, pad.x + pad.width / 2, pad.y - 20);
-
-    // Create enemies
-    this.enemies = [];
-
-    // // Add turrets near landing pads
-    // for (let i = 0; i < this.background.landingPads.length; i++) {
-    //   const pad = this.background.landingPads[i];
-
-    //   // Add 2 turrets per landing pad
-    //   for (let j = 0; j < 2; j++) {
-    //     let enemyX, enemyY;
-    //     let validPosition = false;
-
-    //     // Try to find valid positions
-    //     for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
-    //       // Place turrets near landing pads
-    //       enemyX = pad.x + pad.width / 2 + (Math.random() - 0.5) * 300;
-    //       enemyY = pad.y + (Math.random() - 0.5) * 300;
-
-    //       // Validate position is not inside a wall
-    //       validPosition = !this.isPositionSolid(enemyX, enemyY);
-    //     }
-
-    //     if (validPosition) {
-    //       this.enemies.push(new Turret(this, enemyX, enemyY));
-    //     }
-    //   }
-    // }
-
-    // // Add patrolling enemies
-    // for (let i = 0; i < 10; i++) {
-    //   let enemyX, enemyY;
-    //   let validPosition = false;
-
-    //   // Try to find valid positions
-    //   for (let attempts = 0; attempts < 10 && !validPosition; attempts++) {
-    //     enemyX = Math.random() * (this.background.WORLD_WIDTH - 400) + 200;
-    //     enemyY = Math.random() * (this.background.WORLD_HEIGHT - 400) + 200;
-
-    //     // Validate position is not inside a wall
-    //     validPosition = !this.isPositionSolid(enemyX, enemyY);
-    //   }
-
-    //   if (validPosition) {
-    //     this.enemies.push(new Patrol(this, enemyX, enemyY));
-    //   }
-    // }
+    const playerLayer = data.layers.find(layer => layer.name === "Player");
+    const shipSprite = playerLayer.data.find(sprite => sprite.type === "ship");
+    this.ship = new Ship(this, shipSprite);
 
     // Init viewport offset
     this.resize();
@@ -87,62 +35,62 @@ export default class LevelScene {
     this.offsetX = Math.max(0, this.ship.x - this.game.canvas.width / 2);
     this.offsetY = Math.max(0, this.ship.y - this.game.canvas.height / 2);
   }
+  
+  color(value) {
+    return [
+      "transparent", // 0 striped transparent
+      "#000000", // 1 Black
+      "#FFFFFF", // 2 White
+      "#880000", // 3 Red
+      "#AAFFEE", // 4 Cyan
+      "#CC44CC", // 5 Purple
+      "#00CC55", // 6 Green
+      "#0000AA", // 7 Blue
+      "#EEEE77", // 8 Yellow
+      "#DD8855", // 9 Orange
+      "#664400", // 10 Brown
+      "#FF7777", // 11 Light red
+      "#333333", // 12 Dark gray
+      "#777777", // 13 Medium gray
+      "#AAFF66", // 14 Light green
+      "#0088FF", // 15 Light blue (excluded from palette below)
+    ][value];
+  }
 
   update() {
     if (this.game.gameOver) return;
 
     this.ship.update();
 
-    // Update enemies
-    for (const enemy of this.enemies) {
-      enemy.update();
-    }
-
-    // Check collision with background
+    // Check collision with terrain
     this.checkCollision();
 
-    // Check for pod pickup
-    if (
-      !this.ship.hasPod &&
-      Math.abs(this.ship.x - this.pod.x) < 30 &&
-      Math.abs(this.ship.y - this.pod.y) < 30
-    ) {
-      this.ship.hasPod = true;
-    }
-
-    // Check for mission complete (exit at top with pod)
-    if (this.ship.hasPod && this.ship.y < 50) {
-      this.game.score += 1000;
-      this.game.reset();
-    }
-
-    // Update viewport offset (camera follows ship)
     this.offsetX = Math.max(
       0,
-      Math.min(this.background.WORLD_WIDTH - this.game.canvas.width, this.ship.x - this.game.canvas.width / 2)
+      Math.min(this.WORLD_WIDTH - this.game.canvas.width, this.ship.x - this.game.canvas.width / 2)
     );
     this.offsetY = Math.max(
       0,
-      Math.min(this.background.WORLD_HEIGHT - this.game.canvas.height, this.ship.y - this.game.canvas.height / 2)
+      Math.min(this.WORLD_HEIGHT - this.game.canvas.height, this.ship.y - this.game.canvas.height / 2)
     );
   }
 
   checkCollision() {
     // Check collision with cave walls
-    const cellSize = this.background.cellSize;
+    const tileSize = this.tileSize;
     const shipLeft = this.ship.x - this.ship.width / 2;
     const shipRight = this.ship.x + this.ship.width / 2;
     const shipTop = this.ship.y - this.ship.height / 2;
     const shipBottom = this.ship.y + this.ship.height / 2;
 
     // Get grid cells the ship might be colliding with
-    const gridXStart = Math.floor(shipLeft / cellSize);
-    const gridXEnd = Math.floor(shipRight / cellSize);
-    const gridYStart = Math.floor(shipTop / cellSize);
-    const gridYEnd = Math.floor(shipBottom / cellSize);
+    const gridXStart = Math.floor(shipLeft / tileSize);
+    const gridXEnd = Math.floor(shipRight / tileSize);
+    const gridYStart = Math.floor(shipTop / tileSize);
+    const gridYEnd = Math.floor(shipBottom / tileSize);
 
-    let collidingWithWall = false;
-    let onLandingPad = false;
+    let collidingWithBackground = false;
+    let collidingWithLandingPad = false;
     let landingPadY = 0;
 
     // Check each potential grid cell
@@ -152,27 +100,27 @@ export default class LevelScene {
         if (
           y < 0 ||
           x < 0 ||
-          y >= this.background.grid.length ||
-          x >= this.background.grid[0].length
+          y >= this.terrain.tiles.length ||
+          x >= this.terrain.tiles[0].length
         ) {
           continue;
         }
 
-        if (this.background.grid[y][x] === 1) {
-          // Wall collision
-          collidingWithWall = true;
-        } else if (this.background.grid[y][x] === 3) {
+        if (this.terrain.tiles[y][x] === 1) {
+          // Background collision
+          collidingWithBackground = true;
+        } else if (this.terrain.tiles[y][x] === 3) {
           // Landing pad
-          onLandingPad = true;
-          landingPadY = y * cellSize;
+          collidingWithLandingPad = true;
+          landingPadY = y * tileSize;
         }
       }
     }
 
-    if (collidingWithWall) {
+    if (collidingWithBackground) {
       // Handle wall collision
-      this.game.gotoEnd("CRASHED INTO WALL!");
-    } else if (onLandingPad) {
+      this.game.gotoEnd("CRASHED INTO BACKGROUND!");
+    } else if (collidingWithLandingPad) {
       // Check for proper landing
       const shipBottomY = this.ship.y + this.ship.height / 2;
       const distanceToLandingPad = Math.abs(shipBottomY - landingPadY);
@@ -192,11 +140,10 @@ export default class LevelScene {
 
         // Refuel
         this.ship.fuel = 100;
-        this.game.fuelDisplay.textContent = "100";
 
         // If has pod and lands, complete mission
         if (this.ship.hasPod) {
-          this.game.reset();
+          this.game.gotoNext();
         }
       } else if (
         Math.abs(this.ship.velocityY) >= 0.8 ||
@@ -220,25 +167,8 @@ export default class LevelScene {
 
   draw(ctx) {
 
-    // Draw stars (background)
-    ctx.fillStyle = "#FFFFFF";
-    for (let i = 0; i < 100; i++) {
-      ctx.fillRect(
-        Math.random() * this.game.canvas.width,
-        Math.random() * this.game.canvas.height,
-        1,
-        1
-      );
-    }
-
     // Draw game world
-    this.background.draw(ctx, this.offsetX, this.offsetY);
-    this.pod.draw(ctx, this.offsetX, this.offsetY);
-
-    // Draw enemies
-    for (const enemy of this.enemies) {
-      enemy.draw(ctx, this.offsetX, this.offsetY);
-    }
+    this.terrain.draw(ctx, this.offsetX, this.offsetY);
 
     // Draw ship (always centered)
     this.ship.draw(ctx, this.offsetX, this.offsetY);
@@ -246,6 +176,51 @@ export default class LevelScene {
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px monospace";
     ctx.textAlign = "left";
-    ctx.fillText(`SCORE: ${this.game.score} | FUEL: ${Math.floor(this.ship.fuel)}%`, 20, 20);
+    ctx.fillText(`SCORE: ${this.game.score} | FUEL: ${Math.floor(this.ship.fuel)}% | VELOCITY: ${Math.floor(this.ship.velocityX)},${Math.floor(this.ship.velocityY)}%`, 20, 20);
+  }
+  
+  // Draw map
+  drawMap(ctx) {
+    const scaleX = this.game.mapCanvas.width / this.WORLD_WIDTH;
+    const scaleY = this.game.mapCanvas.height / this.WORLD_HEIGHT;
+
+    // Clear map
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(
+      0,
+      0,
+      this.game.mapCanvas.width,
+      this.game.mapCanvas.height
+    );
+
+    // Draw backgroundTiles
+    ctx.fillStyle = "#4CFF4C";
+    for (const backgroundTile of this.terrain.geometryTiles) {
+      ctx.fillRect(
+        backgroundTile.x * scaleX,
+        backgroundTile.y * scaleY,
+        this.tileSize * scaleX,
+        this.tileSize * scaleY
+      );
+    }
+
+    // Draw ship
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(
+      this.ship.x * scaleX - 2,
+      this.ship.y * scaleY - 2,
+      4,
+      4
+    );
+
+    // Draw viewport rectangle
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      this.offsetX * scaleX,
+      this.offsetY * scaleY,
+      this.game.canvas.width * scaleX,
+      this.game.canvas.height * scaleY
+    );
   }
 }

@@ -1,0 +1,15 @@
+/* Editor custom styles */
+#toolbox {
+  width: 320px;
+  min-width: 220px;
+  max-width: 400px;
+  overflow-y: auto;
+}
+#canvasAreaWrapper {
+  overflow: auto;
+  max-width: 100%;
+  max-height: 70vh;
+}
+.c64-tile-transparent {
+  background: repeating-linear-gradient(45deg, #fff, #fff 6px, #ccc 6px, #ccc 12px);
+}

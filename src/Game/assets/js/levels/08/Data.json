@@ -1,10 +1,10 @@
 {
-    "cellSize": 40,
+    "tileSize": 40,
     "gravity": 0.05,
     "shipX": 2780,
     "shipY": 6580,
-    "gridWidth": 72,
-    "gridHeight": 167,
+    "canvasWidth": 72,
+    "canvasHeight": 167,
     "grid": [
         1,
         1,

@@ -11,11 +11,22 @@ export default class BeginScene {
 
   update() {
     if (this.game.keys.space || this.game.keys.up) {
-      this.game.gotoLevel('assets/js/levels/09/Data.json');
+      this.game.gotoLevel('assets/js/levels/06/LevelScene.json');
     }
   }
 
   draw(ctx, mapCtx) {
+
+    // Draw stars (terrain)
+    ctx.fillStyle = "#FFFFFF";
+    for (let i = 0; i < 100; i++) {
+      ctx.fillRect(
+        Math.random() * this.game.canvas.width,
+        Math.random() * this.game.canvas.height,
+        1,
+        1
+      );
+    }
 
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);

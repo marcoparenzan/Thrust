@@ -12,6 +12,8 @@
         <button @onclick="EmptyAsync">Empty</button>
         <button @onclick="LoadAsync">Load</button>
         <button @onclick="SaveAsync">Save</button>
+        <button @onclick="RotateLeft90Async">Rotate Left 90°</button>
+        <button @onclick="RotateLeft180Async">Rotate Left 180°</button>
         <TileSelector @bind-Type="@TileType"></TileSelector>
     </div>
     <div>
@@ -19,11 +21,13 @@
     </div>
 </div>
 @code {
-    string filename = @"D:\MarcoSoft\Thrust\src\Game\assets\js\levels\07\Data.json";
+    private string filename = @"D:\MarcoSoft\Thrust\src\Game\assets\js\levels\07\Data.json";
 
     private DotNetObjectReference<Home>? pageProxy;
 
     private byte tileType;
+
+    private LevelConfig? levelConfig;
 
     public byte TileType {
         get => tileType;
@@ -38,8 +42,16 @@
         try
         {
             await mapGrid.SetTileTypeAsync(0);
-            await mapService.EmptyAsync(50, 50);
-            await mapGrid.LoadAsync(mapService.Width, mapService.Height, mapService.Values());
+            levelConfig = new LevelConfig
+            {
+                CellSize = 40,
+                Gravity = 0.05M,
+                ShipX = 100,
+                ShipY = 100,
+                GridWidth = 10,
+                GridHeight = 10
+            };
+            await mapGrid.LoadAsync(levelConfig);
         }
         catch(Exception ex)
         {
@@ -52,8 +64,9 @@
         try
         {
             using var stream = new FileStream(filename, FileMode.Open);
-            await mapService.LoadAsync(stream);
-            await mapGrid.LoadAsync(mapService.Width, mapService.Height, mapService.Values());
+            var lc = await mapService.LoadAsync(stream);
+            await mapGrid.LoadAsync(lc);
+            levelConfig = lc;
             stream.Close();
         }
         catch(Exception ex)
@@ -65,8 +78,36 @@
     async Task SaveAsync()
     {
         using var stream = new FileStream(filename, FileMode.Create);
-        await mapService.SaveAsync(stream);
+        await mapService.SaveAsync(stream, levelConfig);
         stream.Close();
+    }
+
+    async Task RotateLeft90Async()
+    {
+        try
+        {
+            var lc = levelConfig.RotateLeft90();
+            await mapGrid.LoadAsync(lc);
+            levelConfig = lc;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during RotateLeft90Async: {ex.Message}");
+        }
+    }
+
+    async Task RotateLeft180Async()
+    {
+        try
+        {
+            var lc = levelConfig.RotateLeft180();
+            await mapGrid.LoadAsync(lc);
+            levelConfig = lc;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during RotateLeft90Async: {ex.Message}");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -92,7 +133,7 @@
     {
         if (x.TryGetInt32(out var xValue) && y.TryGetInt32(out var yValue) && tileType.TryGetByte(out var tileTypeValue))
         {
-            mapService.Set(xValue, yValue, tileTypeValue);
+            levelConfig.Grid[yValue * levelConfig.GridWidth + xValue] = tileTypeValue;
         }
     }
 

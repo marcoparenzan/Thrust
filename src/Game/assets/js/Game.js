@@ -48,8 +48,8 @@ export default class Game {
 
     this.currentScene.draw(ctx);
     // Draw map
-    if (!this.currentScene.background) return;
-    this.currentScene.background.drawMap(mapCtx);
+    if (!this.currentScene.terrain) return;
+    this.currentScene.drawMap(mapCtx);
   }
 
   loadJSON(url) {

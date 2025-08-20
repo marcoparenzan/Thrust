@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThrustEd</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .resizer {
+            cursor: col-resize;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+    <header class="bg-blue-600 text-white p-4">
+        <h1 class="text-xl font-bold">ThrustEd</h1>
+        <div class="mt-2 space-x-2">
+            <button id="newFile" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded">New</button>
+            <button id="saveFile" class="bg-green-500 hover:bg-green-700 px-3 py-1 rounded">Save</button>
+            <input type="file" id="loadFile" accept=".json" class="hidden">
+            <button id="loadFileBtn" class="bg-yellow-500 hover:bg-yellow-700 px-3 py-1 rounded">Load</button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex">
+        <!-- Canvas Area -->
+        <div id="canvasArea" class="bg-white border-r-2" style="width: 80%;">
+            <div class="p-4">
+                <div class="mb-4 flex space-x-4">
+                    <label>Canvas Width (tiles): <input id="canvasWidth" type="number" value="20" class="border px-2 py-1 w-16"></label>
+                    <label>Canvas Height (tiles): <input id="canvasHeight" type="number" value="15" class="border px-2 py-1 w-16"></label>
+                    <label>Tile Size (px): <input id="tileSize" type="number" value="32" class="border px-2 py-1 w-16"></label>
+                    <button id="updateCanvas" class="bg-blue-500 text-white px-3 py-1 rounded">Update</button>
+                </div>
+                <div id="canvasAreaWrapper">
+                  <canvas id="mainCanvas" class="border border-gray-400 block"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resizer -->
+        <div id="resizer" class="w-1 bg-gray-400 resizer hover:bg-gray-600"></div>
+
+        <!-- Toolbox -->
+    <div id="toolbox" class="bg-gray-50">
+            <div class="p-4">
+                <!-- Layers Panel -->
+                <div class="mb-6">
+                    <h3 class="font-bold mb-2">Layers</h3>
+                    <div class="mb-2">
+                        <button id="addTileLayer" class="bg-green-500 text-white px-2 py-1 rounded text-sm mr-1">Add Tile Layer</button>
+                        <button id="addFreeLayer" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">Add Free Layer</button>
+                    </div>
+                    <div id="layersList" class="space-y-2"></div>
+                </div>
+
+                <!-- Tools Panel -->
+                <div id="toolsPanel">
+                    <h3 class="font-bold mb-2">Tools</h3>
+                    <div id="tileGridTools" class="hidden">
+                        <h4 class="font-semibold mb-2">Tile Grid Tools</h4>
+                        <div class="grid grid-cols-8 gap-1 mb-2">
+                            <!-- Tile palette will be populated here -->
+                        </div>
+                        <button id="fillScreenBtn" class="bg-gray-300 hover:bg-gray-400 px-2 py-1 rounded text-xs">Fill Screen</button>
+                    </div>
+                    <div id="freeGridTools" class="hidden">
+                        <h4 class="font-semibold mb-2">Free Grid Tools</h4>
+                        <div>
+                            <label>Sprite ID: <input id="spriteId" type="text" class="border px-2 py-1 w-full mb-2"></label>
+                            <label>Type:
+                                <select id="spriteType" class="border px-2 py-1 w-full mb-2">
+                                    <option value="player">Player</option>
+                                    <option value="turret">Turret</option>
+                                    <option value="fuel">Fuel</option>
+                                    <option value="enemy">Enemy</option>
+                                </select>
+                            </label>
+                            <label>X: <input id="spriteX" type="number" class="border px-2 py-1 w-20"></label>
+                            <label>Y: <input id="spriteY" type="number" class="border px-2 py-1 w-20"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Layer {
+            constructor(name, type) {
+                this.id = Math.random().toString(36).substr(2, 9);
+                this.name = name;
+                this.type = type; // 'tilegrid' or 'freegrid'
+                this.visible = true;
+                this.data = type === 'tilegrid' ? [] : [];
+            }
+        }
+
+        class CanvasEditor {
+            constructor() {
+                this.canvas = document.getElementById('mainCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvasWidth = 20;
+                this.canvasHeight = 15;
+                this.tileSize = 32;
+                this.layers = [];
+                this.activeLayer = null;
+                this.selectedTile = 0;
+                this.isResizing = false;
+                
+                this.initCanvas();
+                this.initEventListeners();
+                this.initResizer();
+                this.generateTilePalette();
+            }
+
+            initCanvas() {
+                this.canvas.width = this.canvasWidth * this.tileSize;
+                this.canvas.height = this.canvasHeight * this.tileSize;
+                this.redraw();
+            }
+
+            initEventListeners() {
+                document.getElementById('updateCanvas').addEventListener('click', () => {
+                    this.canvasWidth = parseInt(document.getElementById('canvasWidth').value);
+                    this.canvasHeight = parseInt(document.getElementById('canvasHeight').value);
+                    this.tileSize = parseInt(document.getElementById('tileSize').value);
+                    this.initCanvas();
+                });
+
+                document.getElementById('addTileLayer').addEventListener('click', () => {
+                    this.addLayer('Tile Layer', 'tilegrid');
+                });
+
+                document.getElementById('addFreeLayer').addEventListener('click', () => {
+                    this.addLayer('Free Layer', 'freegrid');
+                });
+
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+                // Fill screen button
+                document.getElementById('fillScreenBtn').addEventListener('click', () => {
+                    if (this.activeLayer && this.activeLayer.type === 'tilegrid') {
+                        this.fillScreen();
+                    }
+                });
+
+                document.getElementById('newFile').addEventListener('click', () => this.newFile());
+                document.getElementById('saveFile').addEventListener('click', () => this.saveFile());
+                document.getElementById('loadFileBtn').addEventListener('click', () => {
+                    document.getElementById('loadFile').click();
+                });
+                document.getElementById('loadFile').addEventListener('change', (e) => this.loadFile(e));
+            }
+
+            initResizer() {
+                const resizer = document.getElementById('resizer');
+                const canvasArea = document.getElementById('canvasArea');
+                
+                resizer.addEventListener('mousedown', (e) => {
+                    this.isResizing = true;
+                    document.addEventListener('mousemove', this.handleResize);
+                    document.addEventListener('mouseup', () => {
+                        this.isResizing = false;
+                        document.removeEventListener('mousemove', this.handleResize);
+                    });
+                });
+            }
+
+            handleResize = (e) => {
+                if (!this.isResizing) return;
+                const containerWidth = document.querySelector('.flex-1.flex').offsetWidth;
+                const newWidth = (e.clientX / containerWidth) * 100;
+                if (newWidth > 20 && newWidth < 80) {
+                    document.getElementById('canvasArea').style.width = newWidth + '%';
+                }
+            }
+
+            addLayer(name, type) {
+                const layer = new Layer(name, type);
+                if (type === 'tilegrid') {
+                    // Fill with transparent (0)
+                    layer.data = new Array(this.canvasWidth * this.canvasHeight).fill(0);
+                }
+                this.layers.push(layer);
+                this.activeLayer = layer;
+                this.updateLayersList();
+                this.updateToolsPanel();
+            }
+
+            updateLayersList() {
+                const layersList = document.getElementById('layersList');
+                layersList.innerHTML = '';
+                
+                this.layers.forEach((layer, index) => {
+                    const layerDiv = document.createElement('div');
+                    layerDiv.className = `p-2 border rounded ${this.activeLayer === layer ? 'bg-blue-100' : 'bg-white'}`;
+                    layerDiv.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <input type="text" value="${layer.name}" class="font-semibold bg-transparent" onchange="editor.renameLayer('${layer.id}', this.value)">
+                            <div class="space-x-1">
+                                <button onclick="editor.toggleLayerVisibility('${layer.id}')" class="text-sm ${layer.visible ? 'text-green-600' : 'text-red-600'}">
+                                    ${layer.visible ? '👁' : '👁‍🗨'}
+                                </button>
+                                <button onclick="editor.moveLayer('${layer.id}', ${index - 1})" class="text-sm" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                <button onclick="editor.moveLayer('${layer.id}', ${index + 1})" class="text-sm" ${index === this.layers.length - 1 ? 'disabled' : ''}>↓</button>
+                                <button onclick="editor.removeLayer('${layer.id}')" class="text-sm text-red-600">🗑</button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">${layer.type}</div>
+                    `;
+                    layerDiv.addEventListener('click', () => {
+                        this.activeLayer = layer;
+                        this.updateLayersList();
+                        this.updateToolsPanel();
+                    });
+                    layersList.appendChild(layerDiv);
+                });
+            }
+
+            updateToolsPanel() {
+                const tileGridTools = document.getElementById('tileGridTools');
+                const freeGridTools = document.getElementById('freeGridTools');
+                
+                if (this.activeLayer && this.activeLayer.type === 'tilegrid') {
+                    tileGridTools.classList.remove('hidden');
+                    freeGridTools.classList.add('hidden');
+                } else if (this.activeLayer && this.activeLayer.type === 'freegrid') {
+                    tileGridTools.classList.add('hidden');
+                    freeGridTools.classList.remove('hidden');
+                } else {
+                    tileGridTools.classList.add('hidden');
+                    freeGridTools.classList.add('hidden');
+                }
+            }
+
+            // Commodore 64 palette (0=striped transparent, 1=black, 2=white, ... 14=light blue, exclude last color)
+            getC64Palette() {
+                return [
+                    'transparent', // 0 striped transparent
+                    '#000000', // 1 Black
+                    '#FFFFFF', // 2 White
+                    '#880000', // 3 Red
+                    '#AAFFEE', // 4 Cyan
+                    '#CC44CC', // 5 Purple
+                    '#00CC55', // 6 Green
+                    '#0000AA', // 7 Blue
+                    '#EEEE77', // 8 Yellow
+                    '#DD8855', // 9 Orange
+                    '#664400', // 10 Brown
+                    '#FF7777', // 11 Light red
+                    '#333333', // 12 Dark gray
+                    '#777777', // 13 Medium gray
+                    '#AAFF66', // 14 Light green
+                    '#0088FF'  // 15 Light blue (excluded from palette below)
+                ];
+            }
+
+            generateTilePalette() {
+                const tileGridTools = document.getElementById('tileGridTools');
+                const palette = tileGridTools.querySelector('.grid');
+                palette.innerHTML = '';
+                const c64Palette = this.getC64Palette();
+                // Only 0-14 (15 colors, last excluded)
+                for (let i = 0; i < 15; i++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'w-8 h-8 border border-gray-300 cursor-pointer flex items-center justify-center';
+                    if (i === 0) {
+                        tile.classList.add('c64-tile-transparent');
+                        tile.title = 'Transparent (0)';
+                    } else {
+                        tile.style.backgroundColor = c64Palette[i];
+                        tile.title = `Color ${i}`;
+                    }
+                    tile.addEventListener('click', () => {
+                        this.selectedTile = i;
+                        palette.querySelectorAll('div').forEach(t => t.classList.remove('ring-2', 'ring-blue-500'));
+                        tile.classList.add('ring-2', 'ring-blue-500');
+                    });
+                    if (i === 0) tile.classList.add('ring-2', 'ring-blue-500');
+                    palette.appendChild(tile);
+                }
+            }
+
+            fillScreen() {
+                if (!this.activeLayer || this.activeLayer.type !== 'tilegrid') return;
+                const color = this.selectedTile;
+                this.activeLayer.data = new Array(this.canvasWidth * this.canvasHeight).fill(color);
+                this.redraw();
+            }
+
+            handleCanvasClick(e) {
+                if (!this.activeLayer) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (this.activeLayer.type === 'tilegrid') {
+                    const tileX = Math.floor(x / this.tileSize);
+                    const tileY = Math.floor(y / this.tileSize);
+                    const index = tileY * this.canvasWidth + tileX;
+                    if (index >= 0 && index < this.activeLayer.data.length) {
+                        this.activeLayer.data[index] = this.selectedTile;
+                        this.redraw();
+                    }
+                } else if (this.activeLayer.type === 'freegrid') {
+                    // Check if clicking on an existing sprite
+                    let found = null;
+                    for (let sprite of this.activeLayer.data) {
+                        if (Math.abs(sprite.x - x) < 16 && Math.abs(sprite.y - y) < 16) {
+                            found = sprite;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        // Select for move/delete
+                        this.activeLayer.data.forEach(s => s.selected = false);
+                        found.selected = true;
+                        this.redraw();
+                        // Prompt for move/delete
+                        if (confirm('Delete this sprite?')) {
+                            this.activeLayer.data = this.activeLayer.data.filter(s => s !== found);
+                            this.redraw();
+                        }
+                        return;
+                    }
+                    // Add new sprite with default id if empty
+                    const spriteType = document.getElementById('spriteType').value;
+                    let spriteId = document.getElementById('spriteId').value;
+                    if (!spriteId) {
+                        // Default: <type>-<count+1>
+                        const count = this.activeLayer.data.filter(s => s.type === spriteType).length;
+                        spriteId = `${spriteType}-${count + 1}`;
+                        document.getElementById('spriteId').value = spriteId;
+                    }
+                    if (spriteId) {
+                        this.activeLayer.data.push({
+                            id: spriteId,
+                            type: spriteType,
+                            x: x,
+                            y: y
+                        });
+                        this.redraw();
+                    }
+                }
+            }
+
+            redraw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                // Draw grid
+                this.ctx.strokeStyle = '#e5e7eb';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= this.canvasWidth; x++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x * this.tileSize, 0);
+                    this.ctx.lineTo(x * this.tileSize, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= this.canvasHeight; y++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y * this.tileSize);
+                    this.ctx.lineTo(this.canvas.width, y * this.tileSize);
+                    this.ctx.stroke();
+                }
+                // Draw layers
+                const c64Palette = this.getC64Palette();
+                this.layers.forEach(layer => {
+                    if (!layer.visible) return;
+                    if (layer.type === 'tilegrid') {
+                        layer.data.forEach((tileId, index) => {
+                            const x = (index % this.canvasWidth) * this.tileSize;
+                            const y = Math.floor(index / this.canvasWidth) * this.tileSize;
+                            if (tileId === 0) {
+                                // Draw striped transparent
+                                this.ctx.save();
+                                this.ctx.fillStyle = this.ctx.createPattern(CanvasEditor.getStripedPattern(this.tileSize), 'repeat');
+                                this.ctx.fillRect(x, y, this.tileSize, this.tileSize);
+                                this.ctx.restore();
+                            } else {
+                                this.ctx.fillStyle = c64Palette[tileId] || '#000';
+                                this.ctx.fillRect(x, y, this.tileSize, this.tileSize);
+                            }
+                        });
+                    } else if (layer.type === 'freegrid') {
+                        layer.data.forEach(sprite => {
+                            this.ctx.save();
+                            this.ctx.globalAlpha = sprite.selected ? 0.5 : 1.0;
+                            this.ctx.fillStyle = '#3b82f6';
+                            this.ctx.fillRect(sprite.x - 12, sprite.y - 12, 24, 24);
+                            this.ctx.restore();
+                            this.ctx.fillStyle = 'white';
+                            this.ctx.font = '12px Arial';
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillText(sprite.id, sprite.x, sprite.y + 4);
+                            // Draw type below id
+                            this.ctx.fillStyle = 'yellow';
+                            this.ctx.font = '10px Arial';
+                            this.ctx.fillText(sprite.type, sprite.x, sprite.y + 16);
+                        });
+                    }
+                });
+            }
+
+            // Static method for striped pattern
+            static getStripedPattern(size) {
+                const patternCanvas = document.createElement('canvas');
+                patternCanvas.width = patternCanvas.height = size;
+                const pctx = patternCanvas.getContext('2d');
+                pctx.fillStyle = '#fff';
+                pctx.fillRect(0, 0, size, size);
+                pctx.strokeStyle = '#ccc';
+                for (let i = -size; i < size * 2; i += 6) {
+                    pctx.beginPath();
+                    pctx.moveTo(i, 0);
+                    pctx.lineTo(i + size, size);
+                    pctx.stroke();
+                }
+                return patternCanvas;
+            }
+        
+            renameLayer(layerId, newName) {
+                const layer = this.layers.find(l => l.id === layerId);
+                if (layer) {
+                    layer.name = newName;
+                    this.updateLayersList();
+                }
+            }
+
+            toggleLayerVisibility(layerId) {
+                const layer = this.layers.find(l => l.id === layerId);
+                if (layer) {
+                    layer.visible = !layer.visible;
+                    this.updateLayersList();
+                    this.redraw();
+                }
+            }
+
+            moveLayer(layerId, newIndex) {
+                const currentIndex = this.layers.findIndex(l => l.id === layerId);
+                if (currentIndex === -1 || newIndex < 0 || newIndex >= this.layers.length) return;
+                
+                const layer = this.layers.splice(currentIndex, 1)[0];
+                this.layers.splice(newIndex, 0, layer);
+                this.updateLayersList();
+                this.redraw();
+            }
+
+            removeLayer(layerId) {
+                const index = this.layers.findIndex(l => l.id === layerId);
+                if (index !== -1) {
+                    this.layers.splice(index, 1);
+                    if (this.activeLayer && this.activeLayer.id === layerId) {
+                        this.activeLayer = this.layers[0] || null;
+                    }
+                    this.updateLayersList();
+                    this.updateToolsPanel();
+                    this.redraw();
+                }
+            }
+
+            newFile() {
+                this.layers = [];
+                this.activeLayer = null;
+                this.updateLayersList();
+                this.updateToolsPanel();
+                this.redraw();
+            }
+
+            saveFile() {
+                const data = {
+                    canvasWidth: this.canvasWidth,
+                    canvasHeight: this.canvasHeight,
+                    tileSize: this.tileSize,
+                    layers: this.layers
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'canvas-editor-project.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            loadFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        this.canvasWidth = data.canvasWidth;
+                        this.canvasHeight = data.canvasHeight;
+                        this.tileSize = data.tileSize;
+                        this.layers = data.layers;
+                        this.activeLayer = this.layers[0] || null;
+                        
+                        document.getElementById('canvasWidth').value = this.canvasWidth;
+                        document.getElementById('canvasHeight').value = this.canvasHeight;
+                        document.getElementById('tileSize').value = this.tileSize;
+                        
+                        this.initCanvas();
+                        this.updateLayersList();
+                        this.updateToolsPanel();
+                    } catch (error) {
+                        alert('Invalid file format');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // --- JSON Editor Modal (Monaco placeholder) ---
+        // Add a modal for editing layer as raw JSON (Monaco placeholder)
+        // This is a simple modal, Monaco integration can be added if available
+        (function() {
+            const modal = document.createElement('div');
+            modal.id = 'jsonModal';
+            modal.style.display = 'none';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.background = 'rgba(0,0,0,0.5)';
+            modal.style.zIndex = '1000';
+            modal.innerHTML = `
+                <div style="background:#fff;max-width:600px;margin:5vh auto;padding:20px;position:relative;">
+                    <h2 class="font-bold mb-2">Edit Layer JSON</h2>
+                    <textarea id="jsonEditor" style="width:100%;height:300px;font-family:monospace;"></textarea>
+                    <div class="mt-2 flex justify-end space-x-2">
+                        <button id="jsonCancel" class="bg-gray-300 px-3 py-1 rounded">Cancel</button>
+                        <button id="jsonSave" class="bg-blue-500 text-white px-3 py-1 rounded">Save</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const origUpdateLayersList = CanvasEditor.prototype.updateLayersList;
+            CanvasEditor.prototype.updateLayersList = function() {
+                origUpdateLayersList.call(this);
+                // Add edit as JSON button
+                const layersList = document.getElementById('layersList');
+                Array.from(layersList.children).forEach((layerDiv, idx) => {
+                    const btn = document.createElement('button');
+                    btn.textContent = '{ }';
+                    btn.title = 'Edit as JSON';
+                    btn.className = 'ml-2 text-xs bg-gray-200 px-1 rounded';
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        const layer = this.layers[idx];
+                        document.getElementById('jsonEditor').value = JSON.stringify(layer, null, 2);
+                        modal.style.display = 'block';
+                        // Save handler
+                        document.getElementById('jsonSave').onclick = () => {
+                            try {
+                                const newLayer = JSON.parse(document.getElementById('jsonEditor').value);
+                                this.layers[idx] = newLayer;
+                                if (this.activeLayer && this.activeLayer.id === newLayer.id) {
+                                    this.activeLayer = newLayer;
+                                }
+                                modal.style.display = 'none';
+                                this.updateLayersList();
+                                this.updateToolsPanel();
+                                this.redraw();
+                            } catch (err) {
+                                alert('Invalid JSON');
+                            }
+                        };
+                        document.getElementById('jsonCancel').onclick = () => {
+                            modal.style.display = 'none';
+                        };
+                    };
+                    layerDiv.querySelector('.flex').appendChild(btn);
+                });
+            };
+        })();
+
+        const editor = new CanvasEditor();
+    </script>
+</body>
+</html></div>

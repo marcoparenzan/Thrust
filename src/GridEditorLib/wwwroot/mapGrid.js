@@ -3,7 +3,6 @@ export function setup(pageProxy, canvasId, base64String) {
     var that = window.gridEditorLib["11"] || {};
     that.pageProxy = pageProxy;
     that.canvas = document.getElementById(canvasId);
-    that.context = that.canvas.getContext("2d");
     that.tileType = 0; // set from parent
     that.gridColor = "red";
 
@@ -33,6 +32,10 @@ export function init(width, height, zoom, ts) {
     that.zoom = zoom || 16;
     that.zoomWidth = that.width * that.zoom;
     that.zoomHeight = that.height * that.zoom;
+
+    that.canvas.width = that.zoomWidth;
+    that.canvas.height = that.zoomHeight;
+    that.context = that.canvas.getContext("2d");
 
     that.context.fillStyle = "white";
     that.context.fillRect(0, 0, that.zoomWidth, that.zoomHeight);

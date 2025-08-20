@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.10828.68 main
+VisualStudioVersion = 18.0.10828.68
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapApp", "MapApp\MapApp.csproj", "{FDA7C916-8AC9-4638-8B99-97297E312AA4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapsLib", "MapsLib\MapsLib.csproj", "{36207261-0012-4B51-B4CF-0180182E33B9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GridEditorLib", "GridEditorLib\GridEditorLib.csproj", "{5809BF0C-8DDA-4E5C-87E8-9AB3082EE3B4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LevelManipulation", "LevelManipulation\LevelManipulation.csproj", "{C1B7650D-AD46-487F-AA77-B14F82BA9C24}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{5809BF0C-8DDA-4E5C-87E8-9AB3082EE3B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5809BF0C-8DDA-4E5C-87E8-9AB3082EE3B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5809BF0C-8DDA-4E5C-87E8-9AB3082EE3B4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C1B7650D-AD46-487F-AA77-B14F82BA9C24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1B7650D-AD46-487F-AA77-B14F82BA9C24}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C1B7650D-AD46-487F-AA77-B14F82BA9C24}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C1B7650D-AD46-487F-AA77-B14F82BA9C24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,8 +1,8 @@
 export default class Ship {
-  constructor(scene, x, y) {
+  constructor(scene, shipSprite) {
     this.scene = scene;
-    this.x = x;
-    this.y = y;
+    this.x = shipSprite.x;
+    this.y = shipSprite.y;
     this.rotation = 0;
     this.velocityX = 0;
     this.velocityY = 0;

@@ -17,6 +17,17 @@ export default class EndScene {
 
   draw(ctx, mapCtx) {
 
+    // Draw stars (terrain)
+    ctx.fillStyle = "#FFFFFF";
+    for (let i = 0; i < 100; i++) {
+      ctx.fillRect(
+        Math.random() * this.game.canvas.width,
+        Math.random() * this.game.canvas.height,
+        1,
+        1
+      );
+    }
+
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
 
