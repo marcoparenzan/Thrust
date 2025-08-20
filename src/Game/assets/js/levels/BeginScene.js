@@ -3,10 +3,10 @@ export default class BeginScene {
   constructor(game) {
     this.game = game;
 
-    this.initializeWorld();
+    this.resize();
   }
 
-  initializeWorld() {
+  resize() {
   }
 
   update() {

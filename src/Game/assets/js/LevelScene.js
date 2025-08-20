@@ -80,6 +80,10 @@ export default class LevelScene {
     // }
 
     // Init viewport offset
+    this.resize();
+  }
+
+  resize() {
     this.offsetX = Math.max(0, this.ship.x - this.game.canvas.width / 2);
     this.offsetY = Math.max(0, this.ship.y - this.game.canvas.height / 2);
   }

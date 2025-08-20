@@ -3,10 +3,10 @@ export default class EndScene {
   constructor(game) {
     this.game = game;
 
-    this.initializeWorld();
+    this.resize();
   }
 
-  initializeWorld() {
+  resize() {
   }
 
   update() {

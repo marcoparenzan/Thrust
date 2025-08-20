@@ -25,6 +25,12 @@ export default class Game {
     };
   }
 
+  resize() {
+    if (!this.currentScene) return;
+
+    this.currentScene.resize();
+  }
+
   reset() {
     this.resetKeyboard();
 

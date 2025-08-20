@@ -25,7 +25,42 @@
         canvas: canvas,
         mapCanvas: mapCanvas
       });
-      game.reset();
+
+      // Responsive canvas for mobile
+      function resizeCanvas() {
+        const container = document.getElementById('game-container');
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+        
+        // For mobile, we want to use most of the screen
+        const padding = 20; // Small padding around the canvas
+        w -= padding;
+        h -= padding;
+        
+        // Set canvas size to fill screen
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        
+        // Set actual canvas resolution (can be different from display size)
+        canvas.width = w;
+        canvas.height = h;
+        
+        // Resize map canvas proportionally
+        const mapScale = 0.15; // Map is 15% of main canvas width
+        mapCanvas.width = Math.max(80, Math.floor(w * mapScale));
+        mapCanvas.height = Math.max(120, Math.floor(h * mapScale));
+        mapCanvas.style.width = mapCanvas.width + 'px';
+        mapCanvas.style.height = mapCanvas.height + 'px';
+        
+        console.log(`Canvas resized to: ${w}x${h}`);
+
+        game.resize();
+      }
+
+      // Resize on window resize and on load
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('orientationchange', resizeCanvas);
+      resizeCanvas();
 
       // Game loop
       function gameLoop() {
