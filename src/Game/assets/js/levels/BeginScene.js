@@ -11,7 +11,7 @@ export default class BeginScene {
 
   update() {
     if (this.game.keys.space || this.game.keys.up) {
-      this.game.gotoLevel('assets/js/levels/07/Data.json');
+      this.game.gotoLevel('assets/js/levels/09/Data.json');
     }
   }
 

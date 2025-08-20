@@ -7,6 +7,10 @@ namespace LevelManipulation;
 
 internal class LevelConfig
 {
+
+    [JsonPropertyName("cellSize")]
+    public int CellSize { get; set; }
+
     [JsonPropertyName("gravity")]
     public decimal Gravity { get; set; }
 
