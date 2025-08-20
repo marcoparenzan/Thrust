@@ -237,7 +237,7 @@ export default class LevelScene {
     }
 
     // Draw ship (always centered)
-    this.ship.draw(ctx);
+    this.ship.draw(ctx, this.offsetX, this.offsetY);
 
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px monospace";

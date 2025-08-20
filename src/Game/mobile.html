@@ -25,7 +25,6 @@
         canvas: canvas,
         mapCanvas: mapCanvas
       });
-      game.reset();
 
       // Responsive canvas for mobile
       function resizeCanvas() {
@@ -54,6 +53,8 @@
         mapCanvas.style.height = mapCanvas.height + 'px';
         
         console.log(`Canvas resized to: ${w}x${h}`);
+
+        game.reset();
       }
 
       // Resize on window resize and on load

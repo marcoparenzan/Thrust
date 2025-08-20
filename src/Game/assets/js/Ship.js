@@ -11,13 +11,14 @@ export default class Ship {
     this.height = 30;
     this.fuel = 100;
     this.hasPod = false;
-    this.screenX = this.scene.game.canvas.width / 2;
-    this.screenY = this.scene.game.canvas.height / 2;
   }
 
   draw(ctx, offsetX, offsetY) {
+    const screenX = this.x - offsetX;
+    const screenY = this.y - offsetY;
+
     ctx.save();
-    ctx.translate(this.screenX, this.screenY);
+    ctx.translate(screenX, screenY);
     ctx.rotate(this.rotation);
 
     // Ship body
