@@ -31,6 +31,10 @@ export default class TerrainLayer {
     }
   }
 
+  update() {
+    
+  }
+
   draw(ctx, offsetX, offsetY) {
 
     ctx.lineWidth = 1;

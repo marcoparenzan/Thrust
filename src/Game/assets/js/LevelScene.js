@@ -1,6 +1,7 @@
 import Ship from './Ship.js';
 import TerrainLayer from './TerrainLayer.js';
-
+import TurretsLayer from './TurretsLayer.js';
+import FuelsLayer from './FuelsLayer.js';
 export default class LevelScene {
   
   constructor(game) {
@@ -20,8 +21,15 @@ export default class LevelScene {
     const terrainLayer = data.layers.find(layer => layer.name === "Terrain");
     this.terrain.load(terrainLayer);
 
-    this.gravity = data.gravity || 0.05;
+    this.turrets = new TurretsLayer(this);
+    const turretsLayer = data.layers.find(layer => layer.name === "Turrets");
+    this.turrets.load(turretsLayer);
 
+    this.fuels = new FuelsLayer(this);
+    const fuelsLayer = data.layers.find(layer => layer.name === "Fuels");
+    this.fuels.load(fuelsLayer);
+
+    this.gravity = data.gravity || 0.05;
 
     const playerLayer = data.layers.find(layer => layer.name === "Player");
     const shipSprite = playerLayer.data.find(sprite => sprite.type === "ship");
@@ -60,6 +68,10 @@ export default class LevelScene {
   update() {
     if (this.game.gameOver) return;
 
+    this.terrain.update();
+    this.turrets.update();
+    this.fuels.update();
+
     this.ship.update();
 
     // Check collision with terrain
@@ -89,9 +101,8 @@ export default class LevelScene {
     const gridYStart = Math.floor(shipTop / tileSize);
     const gridYEnd = Math.floor(shipBottom / tileSize);
 
-    let collidingWithBackground = false;
+    let collidingWithTerrain = false;
     let collidingWithLandingPad = false;
-    let landingPadY = 0;
 
     // Check each potential grid cell
     for (let y = gridYStart; y <= gridYEnd; y++) {
@@ -108,16 +119,12 @@ export default class LevelScene {
 
         if (this.terrain.tiles[y][x] === 1) {
           // Background collision
-          collidingWithBackground = true;
-        } else if (this.terrain.tiles[y][x] === 3) {
-          // Landing pad
-          collidingWithLandingPad = true;
-          landingPadY = y * tileSize;
-        }
+          collidingWithTerrain = true;
+        } 
       }
     }
 
-    if (collidingWithBackground) {
+    if (collidingWithTerrain) {
       // Handle wall collision
       this.game.gotoEnd("CRASHED INTO BACKGROUND!");
     } else if (collidingWithLandingPad) {
@@ -169,6 +176,8 @@ export default class LevelScene {
 
     // Draw game world
     this.terrain.draw(ctx, this.offsetX, this.offsetY);
+    this.turrets.draw(ctx, this.offsetX, this.offsetY);
+    this.fuels.draw(ctx, this.offsetX, this.offsetY);
 
     // Draw ship (always centered)
     this.ship.draw(ctx, this.offsetX, this.offsetY);

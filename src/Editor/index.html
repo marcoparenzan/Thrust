@@ -10,27 +10,32 @@
         .resizer {
             cursor: col-resize;
         }
+        .sprite-selected {
+            border: 2px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
-    <header class="bg-blue-600 text-white p-4">
-        <h1 class="text-xl font-bold">ThrustEd</h1>
-        <div class="mt-2 space-x-2">
+    <header class="bg-blue-600 text-white p-2">
+        <div class="text-xl font-bold mt-2">
+            ThrustEd
             <button id="newFile" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded">New</button>
-            <button id="saveFile" class="bg-green-500 hover:bg-green-700 px-3 py-1 rounded">Save</button>
             <input type="file" id="loadFile" accept=".json" class="hidden">
             <button id="loadFileBtn" class="bg-yellow-500 hover:bg-yellow-700 px-3 py-1 rounded">Load</button>
-        </div>
+            <button id="saveFile" class="bg-green-500 hover:bg-green-700 px-3 py-1 rounded">Save</button>
+     </div>
+       
     </header>
 
     <div class="flex-1 flex">
         <!-- Canvas Area -->
-        <div id="canvasArea" class="bg-white border-r-2" style="width: 80%;">
+        <div id="canvasArea" class="bg-white border-r-2">
             <div class="p-4">
-                <div class="mb-4 flex space-x-4">
-                    <label>Canvas Width (tiles): <input id="canvasWidth" type="number" value="20" class="border px-2 py-1 w-16"></label>
-                    <label>Canvas Height (tiles): <input id="canvasHeight" type="number" value="15" class="border px-2 py-1 w-16"></label>
-                    <label>Tile Size (px): <input id="tileSize" type="number" value="32" class="border px-2 py-1 w-16"></label>
+                <div class="mb-4 flex space-x-2 flex-wrap">
+                    <label>Canvas Width: <input id="canvasWidth" type="number" value="20" class="border px-2 py-1 w-16"></label>
+                    <label>Canvas Height: <input id="canvasHeight" type="number" value="15" class="border px-2 py-1 w-16"></label>
+                    <label>Tile Size: <input id="tileSize" type="number" value="32" class="border px-2 py-1 w-16"></label>
                     <button id="updateCanvas" class="bg-blue-500 text-white px-3 py-1 rounded">Update</button>
                 </div>
                 <div id="canvasAreaWrapper">
@@ -68,17 +73,21 @@
                     <div id="freeGridTools" class="hidden">
                         <h4 class="font-semibold mb-2">Free Grid Tools</h4>
                         <div>
-                            <label>Sprite ID: <input id="spriteId" type="text" class="border px-2 py-1 w-full mb-2"></label>
+                            <label>Sprite ID: <input id="spriteId" type="text" class="border px-2 py-1 w-full mb-2" placeholder="auto-generated"></label>
                             <label>Type:
                                 <select id="spriteType" class="border px-2 py-1 w-full mb-2">
-                                    <option value="player">Player</option>
-                                    <option value="turret">Turret</option>
-                                    <option value="fuel">Fuel</option>
-                                    <option value="enemy">Enemy</option>
+                                    <option value="Player">Player</option>
+                                    <option value="Fuel">Fuel</option>
+                                    <option value="Turret">Turret</option>
                                 </select>
                             </label>
-                            <label>X: <input id="spriteX" type="number" class="border px-2 py-1 w-20"></label>
-                            <label>Y: <input id="spriteY" type="number" class="border px-2 py-1 w-20"></label>
+                            <div class="text-sm text-gray-600 mb-2">Click canvas to add sprite</div>
+                            <div id="selectedSpriteInfo" class="hidden border-t pt-2 mt-2">
+                                <h5 class="font-semibold">Selected Sprite:</h5>
+                                <div id="spriteDetails"></div>
+                                <button id="editSpriteProps" class="bg-blue-500 text-white px-2 py-1 rounded text-sm mt-2">Edit Properties</button>
+                                <button id="deleteSpriteBtn" class="bg-red-500 text-white px-2 py-1 rounded text-sm mt-2 ml-2">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -107,12 +116,15 @@
                 this.layers = [];
                 this.activeLayer = null;
                 this.selectedTile = 0;
+                this.selectedSprite = null;
                 this.isResizing = false;
+                this.monacoEditor = null;
                 
                 this.initCanvas();
                 this.initEventListeners();
                 this.initResizer();
                 this.generateTilePalette();
+                this.initMonacoEditor();
             }
 
             initCanvas() {
@@ -138,6 +150,7 @@
                 });
 
                 this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+                
                 // Fill screen button
                 document.getElementById('fillScreenBtn').addEventListener('click', () => {
                     if (this.activeLayer && this.activeLayer.type === 'tilegrid') {
@@ -145,6 +158,23 @@
                     }
                 });
 
+                // Sprite editing buttons
+                document.getElementById('editSpriteProps').addEventListener('click', () => {
+                    if (this.selectedSprite) {
+                        this.openSpritePropertiesEditor();
+                    }
+                });
+
+                document.getElementById('deleteSpriteBtn').addEventListener('click', () => {
+                    if (this.selectedSprite && this.activeLayer) {
+                        this.activeLayer.data = this.activeLayer.data.filter(s => s !== this.selectedSprite);
+                        this.selectedSprite = null;
+                        this.updateSelectedSpriteInfo();
+                        this.redraw();
+                    }
+                });
+
+                // File operations
                 document.getElementById('newFile').addEventListener('click', () => this.newFile());
                 document.getElementById('saveFile').addEventListener('click', () => this.saveFile());
                 document.getElementById('loadFileBtn').addEventListener('click', () => {
@@ -156,6 +186,7 @@
             initResizer() {
                 const resizer = document.getElementById('resizer');
                 const canvasArea = document.getElementById('canvasArea');
+                const toolbox = document.getElementById('toolbox');
                 
                 resizer.addEventListener('mousedown', (e) => {
                     this.isResizing = true;
@@ -167,12 +198,21 @@
                 });
             }
 
+            initMonacoEditor() {
+                // Monaco will be loaded dynamically when needed
+                console.log('Monaco Editor will be loaded when JSON editor is opened');
+            }
+
             handleResize = (e) => {
                 if (!this.isResizing) return;
-                const containerWidth = document.querySelector('.flex-1.flex').offsetWidth;
-                const newWidth = (e.clientX / containerWidth) * 100;
-                if (newWidth > 20 && newWidth < 80) {
-                    document.getElementById('canvasArea').style.width = newWidth + '%';
+                const container = document.querySelector('.flex-1.flex');
+                const containerRect = container.getBoundingClientRect();
+                const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+                
+                // Limit canvas area between 30% and 85%
+                if (newWidth > 30 && newWidth < 85) {
+                    const canvasArea = document.getElementById('canvasArea');
+                    canvasArea.style.width = newWidth + '%';
                 }
             }
 
@@ -181,11 +221,17 @@
                 if (type === 'tilegrid') {
                     // Fill with transparent (0)
                     layer.data = new Array(this.canvasWidth * this.canvasHeight).fill(0);
+                } else if (type === 'freegrid') {
+                    // Initialize empty array for sprites
+                    layer.data = [];
                 }
+                
                 this.layers.push(layer);
                 this.activeLayer = layer;
+                this.selectedSprite = null; // Clear any selected sprite
                 this.updateLayersList();
                 this.updateToolsPanel();
+                this.redraw();
             }
 
             updateLayersList() {
@@ -225,13 +271,96 @@
                 if (this.activeLayer && this.activeLayer.type === 'tilegrid') {
                     tileGridTools.classList.remove('hidden');
                     freeGridTools.classList.add('hidden');
+                    this.selectedSprite = null;
                 } else if (this.activeLayer && this.activeLayer.type === 'freegrid') {
                     tileGridTools.classList.add('hidden');
                     freeGridTools.classList.remove('hidden');
                 } else {
                     tileGridTools.classList.add('hidden');
                     freeGridTools.classList.add('hidden');
+                    this.selectedSprite = null;
                 }
+                this.updateSelectedSpriteInfo();
+            }
+
+            updateSelectedSpriteInfo() {
+                const selectedSpriteInfo = document.getElementById('selectedSpriteInfo');
+                const spriteDetails = document.getElementById('spriteDetails');
+                
+                if (this.selectedSprite) {
+                    selectedSpriteInfo.classList.remove('hidden');
+                    spriteDetails.innerHTML = `
+                        <div><strong>ID:</strong> ${this.selectedSprite.id}</div>
+                        <div><strong>Type:</strong> ${this.selectedSprite.type}</div>
+                        <div><strong>Position:</strong> (${Math.round(this.selectedSprite.x)}, ${Math.round(this.selectedSprite.y)})</div>
+                        <div><strong>Properties:</strong> ${Object.keys(this.selectedSprite.properties || {}).length} items</div>
+                    `;
+                } else {
+                    selectedSpriteInfo.classList.add('hidden');
+                }
+            }
+
+            openSpritePropertiesEditor() {
+                if (!this.selectedSprite) return;
+                
+                const modal = document.getElementById('jsonModal');
+                const editor = document.getElementById('jsonEditor');
+                const title = modal.querySelector('h2');
+                
+                title.textContent = `Edit Properties for ${this.selectedSprite.id}`;
+                const jsonString = JSON.stringify(this.selectedSprite.properties || {}, null, 2);
+                
+                // Show modal first
+                modal.style.display = 'block';
+                
+                // Try to use Monaco if available, otherwise fallback to textarea
+                const trySetMonaco = () => {
+                    const monacoContainer = document.getElementById('monacoContainer');
+                    if (window.monacoEditor && typeof monaco !== 'undefined') {
+                        window.monacoEditor.setValue(jsonString);
+                        monacoContainer.style.display = 'block';
+                        editor.style.display = 'none';
+                        window.monacoEditor.layout();
+                    } else {
+                        editor.value = jsonString;
+                        monacoContainer.style.display = 'none';
+                        editor.style.display = 'block';
+                    }
+                };
+                
+                // Wait a bit for Monaco to be available if it's loading
+                setTimeout(trySetMonaco, 100);
+                
+                // Override save handler for sprite properties
+                const saveBtn = document.getElementById('jsonSave');
+                const cancelBtn = document.getElementById('jsonCancel');
+                
+                const newSaveHandler = () => {
+                    try {
+                        const newJsonString = (window.monacoEditor && typeof monaco !== 'undefined') ? 
+                            window.monacoEditor.getValue() : 
+                            editor.value;
+                        const newProperties = JSON.parse(newJsonString);
+                        this.selectedSprite.properties = newProperties;
+                        modal.style.display = 'none';
+                        this.updateSelectedSpriteInfo();
+                        // Remove event listeners
+                        saveBtn.removeEventListener('click', newSaveHandler);
+                        cancelBtn.removeEventListener('click', newCancelHandler);
+                    } catch (err) {
+                        alert('Invalid JSON: ' + err.message);
+                    }
+                };
+                
+                const newCancelHandler = () => {
+                    modal.style.display = 'none';
+                    // Remove event listeners
+                    saveBtn.removeEventListener('click', newSaveHandler);
+                    cancelBtn.removeEventListener('click', newCancelHandler);
+                };
+                
+                saveBtn.addEventListener('click', newSaveHandler);
+                cancelBtn.addEventListener('click', newCancelHandler);
             }
 
             // Commodore 64 palette (0=striped transparent, 1=black, 2=white, ... 14=light blue, exclude last color)
@@ -294,6 +423,7 @@
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
+                
                 if (this.activeLayer.type === 'tilegrid') {
                     const tileX = Math.floor(x / this.tileSize);
                     const tileY = Math.floor(y / this.tileSize);
@@ -304,41 +434,42 @@
                     }
                 } else if (this.activeLayer.type === 'freegrid') {
                     // Check if clicking on an existing sprite
-                    let found = null;
+                    let clickedSprite = null;
                     for (let sprite of this.activeLayer.data) {
                         if (Math.abs(sprite.x - x) < 16 && Math.abs(sprite.y - y) < 16) {
-                            found = sprite;
+                            clickedSprite = sprite;
                             break;
                         }
                     }
-                    if (found) {
-                        // Select for move/delete
-                        this.activeLayer.data.forEach(s => s.selected = false);
-                        found.selected = true;
+                    
+                    if (clickedSprite) {
+                        // Select sprite
+                        this.selectedSprite = clickedSprite;
+                        this.updateSelectedSpriteInfo();
                         this.redraw();
-                        // Prompt for move/delete
-                        if (confirm('Delete this sprite?')) {
-                            this.activeLayer.data = this.activeLayer.data.filter(s => s !== found);
-                            this.redraw();
+                    } else {
+                        // Add new sprite
+                        const spriteType = document.getElementById('spriteType').value;
+                        let spriteId = document.getElementById('spriteId').value.trim();
+                        
+                        if (!spriteId) {
+                            // Generate default ID
+                            const count = this.activeLayer.data.filter(s => s.type === spriteType).length;
+                            spriteId = `${spriteType}-${count + 1}`;
                         }
-                        return;
-                    }
-                    // Add new sprite with default id if empty
-                    const spriteType = document.getElementById('spriteType').value;
-                    let spriteId = document.getElementById('spriteId').value;
-                    if (!spriteId) {
-                        // Default: <type>-<count+1>
-                        const count = this.activeLayer.data.filter(s => s.type === spriteType).length;
-                        spriteId = `${spriteType}-${count + 1}`;
-                        document.getElementById('spriteId').value = spriteId;
-                    }
-                    if (spriteId) {
-                        this.activeLayer.data.push({
+                        
+                        const newSprite = {
                             id: spriteId,
                             type: spriteType,
                             x: x,
-                            y: y
-                        });
+                            y: y,
+                            properties: {}
+                        };
+                        
+                        this.activeLayer.data.push(newSprite);
+                        this.selectedSprite = newSprite;
+                        document.getElementById('spriteId').value = ''; // Clear for next sprite
+                        this.updateSelectedSpriteInfo();
                         this.redraw();
                     }
                 }
@@ -346,6 +477,7 @@
 
             redraw() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
                 // Draw grid
                 this.ctx.strokeStyle = '#e5e7eb';
                 this.ctx.lineWidth = 1;
@@ -361,10 +493,12 @@
                     this.ctx.lineTo(this.canvas.width, y * this.tileSize);
                     this.ctx.stroke();
                 }
+                
                 // Draw layers
                 const c64Palette = this.getC64Palette();
                 this.layers.forEach(layer => {
                     if (!layer.visible) return;
+                    
                     if (layer.type === 'tilegrid') {
                         layer.data.forEach((tileId, index) => {
                             const x = (index % this.canvasWidth) * this.tileSize;
@@ -382,19 +516,33 @@
                         });
                     } else if (layer.type === 'freegrid') {
                         layer.data.forEach(sprite => {
+                            const isSelected = sprite === this.selectedSprite;
+                            
                             this.ctx.save();
-                            this.ctx.globalAlpha = sprite.selected ? 0.5 : 1.0;
-                            this.ctx.fillStyle = '#3b82f6';
-                            this.ctx.fillRect(sprite.x - 12, sprite.y - 12, 24, 24);
-                            this.ctx.restore();
+                            
+                            // Draw sprite background
+                            this.ctx.fillStyle = isSelected ? '#3b82f6' : '#6b7280';
+                            this.ctx.fillRect(sprite.x - 16, sprite.y - 16, 32, 24);
+                            
+                            if (isSelected) {
+                                // Draw selection border
+                                this.ctx.strokeStyle = '#1d4ed8';
+                                this.ctx.lineWidth = 2;
+                                this.ctx.strokeRect(sprite.x - 18, sprite.y - 18, 36, 28);
+                            }
+                            
+                            // Draw sprite ID
                             this.ctx.fillStyle = 'white';
-                            this.ctx.font = '12px Arial';
-                            this.ctx.textAlign = 'center';
-                            this.ctx.fillText(sprite.id, sprite.x, sprite.y + 4);
-                            // Draw type below id
-                            this.ctx.fillStyle = 'yellow';
                             this.ctx.font = '10px Arial';
-                            this.ctx.fillText(sprite.type, sprite.x, sprite.y + 16);
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillText(sprite.id, sprite.x, sprite.y - 4);
+                            
+                            // Draw sprite type
+                            this.ctx.fillStyle = '#fef08a';
+                            this.ctx.font = '8px Arial';
+                            this.ctx.fillText(sprite.type, sprite.x, sprite.y + 6);
+                            
+                            this.ctx.restore();
                         });
                     }
                 });
@@ -511,9 +659,7 @@
             }
         }
 
-        // --- JSON Editor Modal (Monaco placeholder) ---
-        // Add a modal for editing layer as raw JSON (Monaco placeholder)
-        // This is a simple modal, Monaco integration can be added if available
+        // --- Enhanced JSON Editor Modal with Monaco ---
         (function() {
             const modal = document.createElement('div');
             modal.id = 'jsonModal';
@@ -526,36 +672,144 @@
             modal.style.background = 'rgba(0,0,0,0.5)';
             modal.style.zIndex = '1000';
             modal.innerHTML = `
-                <div style="background:#fff;max-width:600px;margin:5vh auto;padding:20px;position:relative;">
-                    <h2 class="font-bold mb-2">Edit Layer JSON</h2>
+                <div style="background:#fff;max-width:800px;max-height:80vh;margin:5vh auto;padding:20px;position:relative;display:flex;flex-direction:column;">
+                    <h2 class="font-bold mb-4">Edit Layer JSON</h2>
+                    <div id="monacoContainer" style="height:400px;border:1px solid #ccc;flex-grow:1;display:none;"></div>
                     <textarea id="jsonEditor" style="width:100%;height:300px;font-family:monospace;"></textarea>
-                    <div class="mt-2 flex justify-end space-x-2">
-                        <button id="jsonCancel" class="bg-gray-300 px-3 py-1 rounded">Cancel</button>
-                        <button id="jsonSave" class="bg-blue-500 text-white px-3 py-1 rounded">Save</button>
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button id="jsonCancel" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Cancel</button>
+                        <button id="jsonSave" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Save</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
 
+            let monacoEditor = null;
+            let monacoLoaded = false;
+            let monacoLoading = false;
+
+            // Load Monaco Editor dynamically
+            function loadMonaco() {
+                return new Promise((resolve, reject) => {
+                    if (monacoLoaded) {
+                        resolve();
+                        return;
+                    }
+                    
+                    if (monacoLoading) {
+                        // Wait for existing load
+                        const checkLoaded = setInterval(() => {
+                            if (monacoLoaded) {
+                                clearInterval(checkLoaded);
+                                resolve();
+                            }
+                        }, 100);
+                        return;
+                    }
+                    
+                    monacoLoading = true;
+                    
+                    // Load Monaco Editor script
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js';
+                    script.onload = () => {
+                        // Configure and load Monaco
+                        require.config({ 
+                            paths: { 
+                                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' 
+                            } 
+                        });
+                        
+                        require(['vs/editor/editor.main'], () => {
+                            monacoLoaded = true;
+                            monacoLoading = false;
+                            console.log('Monaco Editor loaded successfully');
+                            resolve();
+                        }, (err) => {
+                            monacoLoading = false;
+                            console.error('Failed to load Monaco Editor:', err);
+                            reject(err);
+                        });
+                    };
+                    script.onerror = () => {
+                        monacoLoading = false;
+                        console.error('Failed to load Monaco Editor loader');
+                        reject(new Error('Failed to load Monaco Editor loader'));
+                    };
+                    document.head.appendChild(script);
+                });
+            }
+
+            // Initialize Monaco when available
+            function initMonaco() {
+                if (typeof monaco !== 'undefined' && !monacoEditor) {
+                    monacoEditor = monaco.editor.create(document.getElementById('monacoContainer'), {
+                        value: '{}',
+                        language: 'json',
+                        theme: 'vs-light',
+                        automaticLayout: true,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false
+                    });
+                    
+                    // Make Monaco editor accessible globally for sprite properties editor
+                    window.monacoEditor = monacoEditor;
+                }
+            }
+
             const origUpdateLayersList = CanvasEditor.prototype.updateLayersList;
             CanvasEditor.prototype.updateLayersList = function() {
                 origUpdateLayersList.call(this);
-                // Add edit as JSON button
+                // Add edit as JSON button to each layer
                 const layersList = document.getElementById('layersList');
                 Array.from(layersList.children).forEach((layerDiv, idx) => {
                     const btn = document.createElement('button');
                     btn.textContent = '{ }';
                     btn.title = 'Edit as JSON';
-                    btn.className = 'ml-2 text-xs bg-gray-200 px-1 rounded';
-                    btn.onclick = (e) => {
+                    btn.className = 'ml-1 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded';
+                    btn.onclick = async (e) => {
                         e.stopPropagation();
                         const layer = this.layers[idx];
-                        document.getElementById('jsonEditor').value = JSON.stringify(layer, null, 2);
+                        const jsonString = JSON.stringify(layer, null, 2);
+                        
+                        document.querySelector('#jsonModal h2').textContent = `Edit Layer JSON: ${layer.name}`;
+                        
+                        // Show modal first
                         modal.style.display = 'block';
+                        
+                        // Try to load Monaco
+                        try {
+                            await loadMonaco();
+                            initMonaco();
+                            
+                            if (monacoEditor) {
+                                monacoEditor.setValue(jsonString);
+                                document.getElementById('monacoContainer').style.display = 'block';
+                                document.getElementById('jsonEditor').style.display = 'none';
+                                monacoEditor.layout(); // Ensure proper layout
+                            } else {
+                                throw new Error('Monaco failed to initialize');
+                            }
+                        } catch (error) {
+                            console.warn('Monaco Editor not available, using textarea:', error);
+                            document.getElementById('jsonEditor').value = jsonString;
+                            document.getElementById('monacoContainer').style.display = 'none';
+                            document.getElementById('jsonEditor').style.display = 'block';
+                        }
+                        
                         // Save handler
-                        document.getElementById('jsonSave').onclick = () => {
+                        const saveHandler = () => {
                             try {
-                                const newLayer = JSON.parse(document.getElementById('jsonEditor').value);
+                                const newJsonString = monacoEditor && monacoLoaded ? 
+                                    monacoEditor.getValue() : 
+                                    document.getElementById('jsonEditor').value;
+                                const newLayer = JSON.parse(newJsonString);
+                                
+                                // Validate layer structure
+                                if (!newLayer.id || !newLayer.name || !newLayer.type) {
+                                    throw new Error('Layer must have id, name, and type properties');
+                                }
+                                
                                 this.layers[idx] = newLayer;
                                 if (this.activeLayer && this.activeLayer.id === newLayer.id) {
                                     this.activeLayer = newLayer;
@@ -564,13 +818,24 @@
                                 this.updateLayersList();
                                 this.updateToolsPanel();
                                 this.redraw();
+                                
+                                // Clean up
+                                document.getElementById('jsonSave').removeEventListener('click', saveHandler);
+                                document.getElementById('jsonCancel').removeEventListener('click', cancelHandler);
                             } catch (err) {
-                                alert('Invalid JSON');
+                                alert('Invalid JSON: ' + err.message);
                             }
                         };
-                        document.getElementById('jsonCancel').onclick = () => {
+                        
+                        const cancelHandler = () => {
                             modal.style.display = 'none';
+                            // Clean up
+                            document.getElementById('jsonSave').removeEventListener('click', saveHandler);
+                            document.getElementById('jsonCancel').removeEventListener('click', cancelHandler);
                         };
+                        
+                        document.getElementById('jsonSave').addEventListener('click', saveHandler);
+                        document.getElementById('jsonCancel').addEventListener('click', cancelHandler);
                     };
                     layerDiv.querySelector('.flex').appendChild(btn);
                 });
